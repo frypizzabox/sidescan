@@ -10,5 +10,10 @@ export default defineConfig({
       "@": fileURLToPath(new URL("./src", import.meta.url)),
     },
   },
-  // Note: /api proxy to the server added in Phase 2 when there's an API surface.
+  server: {
+    proxy: {
+      "/api": "http://localhost:3000",
+      "/healthz": "http://localhost:3000",
+    },
+  },
 });
