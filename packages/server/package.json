@@ -7,7 +7,7 @@
   "bin": { "sidescan": "./bin/sidescan" },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "files": ["dist/", "bin/", "src/config/example.yaml"],
+  "files": ["dist/", "bin/", "src/config/example.yaml", "src/db/migrations/"],
   "engines": { "node": ">=20" },
   "scripts": {
     "build": "tsup",
