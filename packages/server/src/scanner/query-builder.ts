@@ -24,10 +24,26 @@ You will receive a bundle of files from a single repository: README, manifest, f
 
 Your job is to:
 1. Summarize what the project is — one paragraph, 2-4 sentences. Concrete about what it does and who it's for. No hype.
-2. Generate 6-8 search queries that would surface similar projects, competitors, or adjacent work on HackerNews, Product Hunt, GitHub, and the web. Queries should be specific (not generic like "web app" or "CLI tool"). Mix of:
-   - Exact technical categories (e.g., "self-hosted analytics", "TUI task manager")
-   - Problem-space phrases (e.g., "alternative to Octolens", "GitHub dependency insights")
-   - Technology combinations if distinctive (e.g., "React Native + SQLite local-first")
+2. Generate 6-8 search queries that would surface similar projects, competitors, or adjacent work on HackerNews, GitHub, and general web search.
+
+CRITICAL: queries are fed to search engines (HN Algolia, GitHub repo search, Brave/Google). These engines treat a multi-word query as AND of all tokens. So **short queries are mandatory**:
+
+- **2-4 keywords max per query.** No sentences, no connectors like "for", "of", "with", "alternative to".
+- Prefer **noun phrases and category labels** over descriptions.
+- Include at least one specific named-competitor query if a competitor is obvious (e.g., "Octolens", "Plausible", "Linear"). Just the name.
+
+GOOD examples:
+  "self-hosted analytics"
+  "TUI task manager"
+  "GitHub repo monitor"
+  "Plausible"
+  "competitive intelligence dev tools"
+  "local-first SQLite SaaS"
+
+BAD examples (too long, will match nothing):
+  "self-hosted competitive intelligence tool for developers"
+  "LLM-powered project discovery GitHub scanning"
+  "alternative to Octolens competitor tracking open source"
 
 Return a single JSON object. No prose, no markdown fences.
 

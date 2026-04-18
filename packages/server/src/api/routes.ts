@@ -5,6 +5,7 @@ import {
   listProjects,
   listReposForProject,
 } from "@/db/queries.js";
+import { listFindingsForProject } from "@/db/findings.js";
 
 export interface ApiDeps {
   db: Db;
@@ -18,9 +19,6 @@ export interface ReloadResult {
   error?: string;
 }
 
-/**
- * Builds the `/api` router. Everything behind this path is JSON.
- */
 export function buildApiRoutes(deps: ApiDeps): Hono {
   const api = new Hono();
 
@@ -47,12 +45,40 @@ export function buildApiRoutes(deps: ApiDeps): Hono {
     return c.json({ project: toProjectDto(project), repos });
   });
 
+  api.get("/projects/:slug/findings", (c) => {
+    const slug = c.req.param("slug");
+    const project = getProjectBySlug(deps.db, slug);
+    if (!project || project.hidden === 1) {
+      return c.json({ error: "project_not_found", slug }, 404);
+    }
+    const tabParam = c.req.query("tab");
+    const tab =
+      tabParam === "news" || tabParam === "github" ? tabParam : undefined;
+    const limit = Math.min(
+      Math.max(parseInt(c.req.query("limit") ?? "100", 10) || 100, 1),
+      500,
+    );
+    const rows = listFindingsForProject(deps.db, project.id, { tab, limit });
+    return c.json({
+      findings: rows.map((r) => ({
+        id: r.id,
+        source: r.source,
+        tab: r.tab,
+        url: r.url,
+        title: r.title,
+        snippet: r.snippet,
+        eventDate: r.event_date,
+        firstSeenScanId: r.first_seen_scan_id,
+        lastSeenScanId: r.last_seen_scan_id,
+        similarityScore: r.similarity_score,
+        relevanceScore: r.relevance_score,
+      })),
+    });
+  });
+
   api.post("/reload", async (c) => {
     if (!deps.onReload) {
-      return c.json(
-        { ok: false, error: "reload_not_available" },
-        503,
-      );
+      return c.json({ ok: false, error: "reload_not_available" }, 503);
     }
     try {
       const result = await deps.onReload();
