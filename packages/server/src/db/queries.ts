@@ -18,6 +18,8 @@ export interface RepoRow {
   id: number;
   project_id: number;
   path: string;
+  /** For GitHub URLs, optional non-default branch. Null for local paths or when using default. */
+  branch: string | null;
   last_scanned_at: string | null;
   last_commit_sha_seen: string | null;
   created_at: string;
@@ -103,15 +105,30 @@ export function hideProject(db: Db, id: number): void {
   ).run(new Date().toISOString(), id);
 }
 
-export function insertRepo(db: Db, projectId: number, path: string): number {
+export function insertRepo(
+  db: Db,
+  projectId: number,
+  path: string,
+  branch: string | null = null,
+): number {
   const now = new Date().toISOString();
   const result = db
     .prepare(
-      `INSERT INTO repo (project_id, path, created_at, updated_at)
-       VALUES (?, ?, ?, ?)`,
+      `INSERT INTO repo (project_id, path, branch, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?)`,
     )
-    .run(projectId, path, now, now);
+    .run(projectId, path, branch, now, now);
   return Number(result.lastInsertRowid);
+}
+
+export function updateRepoBranch(
+  db: Db,
+  id: number,
+  branch: string | null,
+): void {
+  db.prepare(
+    "UPDATE repo SET branch = ?, updated_at = ? WHERE id = ?",
+  ).run(branch, new Date().toISOString(), id);
 }
 
 export function deleteRepo(db: Db, id: number): void {

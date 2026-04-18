@@ -4,6 +4,8 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import type { Db } from "@/db/connection.js";
 import type { RepoRow } from "@/db/queries.js";
+import type { RepoSpec } from "@/scanner/repo-spec.js";
+import { collectGitHubRepoActivity } from "@/scanner/repo-activity-github.js";
 
 const execFile = promisify(execFileCb);
 
@@ -88,11 +90,32 @@ function parseLine(line: string): CommitRecord | null {
 }
 
 /**
- * Collects activity for one repo and writes RepoActivity rows for the
- * given scan. Updates `repo.last_commit_sha_seen` so the next scan is
- * incremental. Returns a summary for logging.
+ * Collects activity for one repo. Dispatches to the GitHub API or local
+ * `git log` based on the spec. Writes RepoActivity rows and updates
+ * `repo.last_commit_sha_seen` for incremental scans.
  */
 export async function collectRepoActivity(
+  db: Db,
+  scanId: number,
+  repo: RepoRow,
+  spec: RepoSpec,
+  lookbackYears: number,
+  githubToken: string | null = null,
+): Promise<RepoActivitySummary> {
+  if (spec.type === "github") {
+    return collectGitHubRepoActivity(
+      db,
+      scanId,
+      repo,
+      spec,
+      lookbackYears,
+      githubToken,
+    );
+  }
+  return collectLocalRepoActivity(db, scanId, repo, lookbackYears);
+}
+
+async function collectLocalRepoActivity(
   db: Db,
   scanId: number,
   repo: RepoRow,
