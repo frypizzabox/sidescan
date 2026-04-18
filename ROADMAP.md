@@ -1,6 +1,6 @@
 # Sidescan Roadmap
 
-> A self-hostable competitive-intelligence server for solo devs. Point it at your own repos; it watches HN, Product Hunt, GitHub, and the web for nearby work.
+> A self-hostable competitive-intelligence server for solo devs. Point it at your GitHub repos (or local clones); it watches HN, GitHub, and the web for nearby work.
 
 **Distribution model:** self-hosted service. Primary install paths: Docker Compose (clone + `docker compose up`), run from source for tinkering, and a compiled single-file binary in Phase 7. An install is one directory holding `config.yaml`, `.env`, and `data/` (SQLite DB). Not a global npm CLI.
 

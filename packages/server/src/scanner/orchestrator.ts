@@ -21,6 +21,8 @@ import {
 } from "@/db/findings.js";
 import { rankFindings } from "@/scanner/ranker.js";
 import { generateWhatsNew } from "@/scanner/whats-new.js";
+import { parseRepoSpec } from "@/scanner/repo-spec.js";
+import { resolveKeys } from "@/config/resolve-env.js";
 import type { Config } from "@/config/schema.js";
 
 export interface ScanResult {
@@ -78,6 +80,9 @@ export async function scanProject(opts: {
   }
 
   const firstRepo = repos[0]!;
+  const firstSpec = parseRepoSpec(firstRepo.path, firstRepo.branch);
+  const githubToken = resolveKeys(config).githubToken;
+
   const isBootstrap =
     opts.bootstrap === true || repos.every((r) => !r.last_commit_sha_seen);
   const sources: SourceSet = buildSources(config);
@@ -114,14 +119,17 @@ export async function scanProject(opts: {
   let errorMsg: string | undefined;
 
   try {
-    // Step 1: repo activity (all repos)
+    // Step 1: repo activity (all repos — each spec independently)
     for (const repo of repos) {
       try {
+        const spec = parseRepoSpec(repo.path, repo.branch);
         const summary = await collectRepoActivity(
           db,
           scanId,
           repo,
+          spec,
           project.bootstrap_lookback_years,
+          githubToken,
         );
         activitySummaries.push({
           repoPath: summary.repoPath,
@@ -140,7 +148,11 @@ export async function scanProject(opts: {
 
     // Step 2: AI inference on primary repo
     try {
-      const { inference: inf } = await inferRepo(provider, firstRepo.path);
+      const { inference: inf } = await inferRepo(
+        provider,
+        firstSpec,
+        githubToken,
+      );
       inference = inf;
       totalCost += inf.costEstimateUSD ?? 0;
 
