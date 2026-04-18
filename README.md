@@ -1,6 +1,6 @@
 # Sidescan
 
-> Self-hostable competitive-intel server for solo devs. Point it at your own repos; it watches HN, Product Hunt, GitHub, and the web for nearby work.
+> Self-hostable competitive-intel server for solo devs. Point it at your GitHub repos (or local clones); it watches HN, GitHub, and the web for nearby work.
 
 **Status:** V1 complete — scan, infer, surface findings, rank, dashboard.
 
@@ -52,7 +52,7 @@ docker compose up -d
 open http://localhost:3000
 ```
 
-The compose file mounts `~/Projects` on your host to `/repos` in the container, so configure your projects as `/repos/<your-project-folder>` inside `config.yaml`. Edit `docker-compose.yml` if your repos live elsewhere.
+The compose file mounts `~/Projects` on your host to `/repos` in the container so local-clone paths work; if you use only GitHub URLs, the mount isn't needed. Edit `docker-compose.yml` for your setup.
 
 ### Running commands inside the container
 
@@ -122,8 +122,14 @@ projects:
       frequency: weekly   # daily | weekly | hourly | manual
       time: "09:00"
     repos:
-      - path: /repos/my-project   # or ~/Projects/my-project when running from source
+      - path: https://github.com/owner/repo
+        # branch: develop   # optional; defaults to the repo's default branch
+
+      # Or point at a local clone:
+      # - path: /Users/you/Projects/web/my-project
 ```
+
+`path` accepts either a GitHub URL (`https://github.com/owner/repo` or `git@github.com:owner/repo.git`) or an absolute filesystem path. GitHub URLs are fetched via the GitHub API — set `GITHUB_TOKEN` in `.env` or rate limits will bite you fast.
 
 ## Env keys (in `.env`)
 
@@ -135,7 +141,8 @@ OPENAI_API_KEY=sk-...            # required if providers.ai = openai
 BRAVE_API_KEY=...                # if providers.search = brave
 SERPER_API_KEY=...               # if providers.search = serper
 
-GITHUB_TOKEN=ghp_...             # optional, raises GitHub API rate limits
+GITHUB_TOKEN=ghp_...             # optional for search sources; effectively required
+                                 # if any repo is a GitHub URL (unauth = 60 req/hr)
 ```
 
 Keys never live in `config.yaml`. `config.yaml` is safe to commit to a dotfiles repo; `.env` stays on the host.

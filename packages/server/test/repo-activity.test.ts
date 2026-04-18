@@ -127,7 +127,13 @@ describe("collectRepoActivity", () => {
     const scanId = Number(scanInsert.lastInsertRowid);
 
     const repos = listReposForProject(db, projectId);
-    const summary = await collectRepoActivity(db, scanId, repos[0]!, 2);
+    const summary = await collectRepoActivity(
+      db,
+      scanId,
+      repos[0]!,
+      { type: "local", path: repoDir },
+      2,
+    );
 
     expect(summary.commitsRead).toBe(2);
     expect(summary.commitsInserted).toBe(2);
@@ -170,6 +176,7 @@ describe("collectRepoActivity", () => {
       db,
       Number(scan1.lastInsertRowid),
       listReposForProject(db, projectId)[0]!,
+      { type: "local", path: repoDir },
       2,
     );
 
@@ -185,6 +192,7 @@ describe("collectRepoActivity", () => {
       db,
       Number(scan2.lastInsertRowid),
       listReposForProject(db, projectId)[0]!,
+      { type: "local", path: repoDir },
       2,
     );
 

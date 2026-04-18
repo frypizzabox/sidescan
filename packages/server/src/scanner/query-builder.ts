@@ -5,6 +5,8 @@ import {
   formatContextForPrompt,
   type RepoContext,
 } from "@/scanner/repo-analyzer.js";
+import { analyzeGitHubRepo } from "@/scanner/repo-analyzer-github.js";
+import type { RepoSpec } from "@/scanner/repo-spec.js";
 
 export interface RepoInference {
   /** One-paragraph description of what the project is. */
@@ -55,13 +57,18 @@ Format:
 
 /**
  * Analyzes a repo and asks the AI for inference + search queries.
+ * Dispatches to the local or GitHub analyzer based on the spec.
  * Returns parsed + validated response. Throws RuntimeError on malformed output.
  */
 export async function inferRepo(
   provider: AIProvider,
-  repoPath: string,
+  spec: RepoSpec,
+  githubToken: string | null,
 ): Promise<{ context: RepoContext; inference: RepoInference }> {
-  const context = analyzeRepo(repoPath);
+  const context =
+    spec.type === "github"
+      ? await analyzeGitHubRepo(spec, githubToken)
+      : analyzeRepo(spec.path);
   const userPrompt = formatContextForPrompt(context);
 
   const response = await provider.chat({

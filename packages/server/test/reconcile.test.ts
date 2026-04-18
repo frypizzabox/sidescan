@@ -60,6 +60,7 @@ describe("reconcile", () => {
       projectsHidden: 0,
       projectsUnhidden: 0,
       reposAdded: 0,
+      reposUpdated: 0,
       reposRemoved: 0,
     });
   });
