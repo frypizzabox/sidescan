@@ -4,7 +4,7 @@
 
 **Distribution model:** self-hosted service. Primary install paths: Docker Compose (clone + `docker compose up`), run from source for tinkering, and a compiled single-file binary in Phase 7. An install is one directory holding `config.yaml`, `.env`, and `data/` (SQLite DB). Not a global npm CLI.
 
-**Current status:** Phase 4 complete — external sources wired. A scan now surfaces real findings: HN stories + comments, GitHub similar repos, and (with a key) web search via Brave or Serper. Findings dedupe by `(source, url)` and persist across scans.
+**Current status:** V1 complete — phases 1-7 shipped. `sidescan scan <project>` runs end-to-end: repo file-summary → Claude inference → fan-out to HN/GitHub/(optional Brave|Serper) → AI ranker with auto-dismiss → what's-new digest. Web dashboard: project list, timeline, ⌘K palette, dismiss, across-projects feed, scan detail. Packaged as a Docker image that serves API + web on one port.
 
 ## Phases
 
@@ -12,10 +12,10 @@
 - [x] **Phase 2 — Config ↔ DB reconciliation** — projects + repos sync from YAML into DB on start/reload; API routes for projects; `sidescan status` + `sidescan reload` CLI commands; web sidebar switcher + project detail shell with News/Insights/Github tabs.
 - [x] **Phase 3 — Repo analyzer + AI layer + repo activity** — `sidescan scan` runs end-to-end against Claude Sonnet 4.6, extracts repo inference via file-summary prompt, captures commits via `git log`. Web project page shows the inference card.
 - [x] **Phase 4 — External sources** — HN (Algolia), GitHub repo search, Brave, Serper. Findings dedupe by `(source, url)`; first_seen/last_seen tracked per scan. Web News + Github tabs render real results.
-- [ ] **Phase 5 — Scanner orchestration + cumulative diff** — bootstrap vs incremental scans, `sidescan reset <project>`, in-process scheduler (`node-cron`), AI ranker, "what's new" summaries.
-- [ ] **Phase 6 — Dashboard UI** — project list → project detail with **News | Insights | Github** tabs (Insights deferred to V2), timeline view merging repo activity + findings, ⌘K command palette, dismiss-finding.
-- [ ] **Phase 7 — Distribution** — npm publish, Dockerfile + `docker-compose.yml`, README with install/screenshots, optional compiled binaries.
-- [ ] **Phase 8 — Launch** — Show HN draft, r/selfhosted, Microlaunch, Peerlist listings, 90-second screencast.
+- [x] **Phase 5 — Scanner orchestration + cumulative diff** — AI ranker with auto-dismiss below 0.2, what's-new digest per scan, `sidescan reset <project>`, in-process `node-cron` scheduler wired from `sidescan start`, incremental `since` cutoffs.
+- [x] **Phase 6 — Dashboard UI** — Project list with new-count badges, News tab as timeline (findings + commits interleaved), what's-new hero card, across-projects feed, scan detail page, ⌘K command palette, dismiss action.
+- [x] **Phase 7 — Distribution** — multi-stage Dockerfile, docker-compose.yml mounting config + data, static web served from the API server, README rewritten around Docker quickstart.
+- [ ] **Phase 8 — Launch** (optional) — Show HN draft, r/selfhosted, Microlaunch, Peerlist, screencast.
 
 ## Stack
 
