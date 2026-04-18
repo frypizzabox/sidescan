@@ -30,7 +30,6 @@ export function registerScan(program: Command): void {
 
           const provider = createAIProvider(config);
 
-          // Determine target slugs
           const all = listProjects(db);
           const targets = slug
             ? all.filter((p) => p.slug === slug)
@@ -56,6 +55,7 @@ export function registerScan(program: Command): void {
             console.log(`[${project.slug}] starting scan`);
             const result = await scanProject({
               db,
+              config,
               provider,
               projectSlug: project.slug,
               bootstrap: opts.bootstrap,
@@ -63,9 +63,10 @@ export function registerScan(program: Command): void {
 
             for (const a of result.activity) {
               console.log(
-                `  ${project.slug}   repo activity: ${a.commitsInserted} commits (${a.repoPath})`,
+                `  ${project.slug}   activity: ${a.commitsInserted} commits (${a.repoPath})`,
               );
             }
+
             if (result.inference) {
               const cost = result.costEstimateUSD
                 ? ` ($${result.costEstimateUSD.toFixed(4)})`
@@ -73,10 +74,18 @@ export function registerScan(program: Command): void {
               console.log(
                 `  ${project.slug}   inference: ${result.inference.search_queries.length} queries, ${result.inference.inputTokens} in / ${result.inference.outputTokens} out${cost}`,
               );
+            }
+
+            for (const f of result.findings) {
               console.log(
-                `  ${project.slug}   summary: ${result.inference.summary.slice(0, 120)}${result.inference.summary.length > 120 ? "…" : ""}`,
+                `  ${project.slug}   ${f.source.padEnd(15)} ${f.found} found, ${f.inserted} new, ${f.seenAgain} seen again`,
               );
             }
+
+            for (const s of result.skippedSources) {
+              console.log(`  ${project.slug}   skipped ${s.name}: ${s.reason}`);
+            }
+
             console.log(
               `  ${project.slug}   scan #${result.scanId} ${result.status}${result.error ? `: ${result.error}` : ""}`,
             );

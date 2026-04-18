@@ -12,45 +12,53 @@ import {
   type RepoInference,
 } from "@/scanner/query-builder.js";
 import { collectRepoActivity } from "@/scanner/repo-activity.js";
+import { buildSources, type SourceSet } from "@/sources/factory.js";
+import { upsertFindings } from "@/db/findings.js";
+import type { Config } from "@/config/schema.js";
 
 export interface ScanResult {
   scanId: number;
   project: ProjectRow;
   inference: RepoInference | null;
   activity: { repoPath: string; commitsInserted: number }[];
+  findings: {
+    source: string;
+    found: number;
+    inserted: number;
+    seenAgain: number;
+  }[];
+  skippedSources: { name: string; reason: string }[];
   status: "success" | "partial" | "failed";
   costEstimateUSD: number | null;
   error?: string;
 }
 
 /**
- * Runs a scan for a single project.
+ * Runs a scan for a single project end-to-end.
  *
- * Phase 3 scope:
+ * Flow:
  *   1. Create a scan row (status=running).
  *   2. For each repo: collect git commit activity → repo_activity table.
- *   3. Analyze the first repo (primary): file-summary → AI → project inference.
- *   4. Write ai_summary row, update project.ai_inferred_summary.
- *   5. Mark scan finished.
- *
- * External source scanning (HN/PH/GitHub/web) is Phase 4. "What's new"
- * summaries are Phase 5.
+ *   3. Analyze primary repo → file-summary → AI → project inference + queries.
+ *   4. Fan out AI-generated queries to each active source (HN, GitHub, web).
+ *   5. Upsert findings with (source, url) dedupe.
+ *   6. Mark scan finished.
  */
 export async function scanProject(opts: {
   db: Db;
+  config: Config;
   provider: AIProvider;
   projectSlug: string;
   bootstrap?: boolean;
+  queriesPerSource?: number;
 }): Promise<ScanResult> {
-  const { db, provider, projectSlug } = opts;
+  const { db, config, provider, projectSlug } = opts;
+  const queriesPerSource = opts.queriesPerSource ?? 4;
 
   const project = getProjectBySlug(db, projectSlug);
-  if (!project) {
-    throw new RuntimeError(`Unknown project: '${projectSlug}'`);
-  }
-  if (project.hidden === 1) {
+  if (!project) throw new RuntimeError(`Unknown project: '${projectSlug}'`);
+  if (project.hidden === 1)
     throw new RuntimeError(`Project '${projectSlug}' is hidden in config.`);
-  }
 
   const repos = listReposForProject(db, project.id);
   if (repos.length === 0) {
@@ -62,8 +70,8 @@ export async function scanProject(opts: {
   const firstRepo = repos[0]!;
   const isBootstrap =
     opts.bootstrap === true || repos.every((r) => !r.last_commit_sha_seen);
+  const sources: SourceSet = buildSources(config);
 
-  // Create scan row — run all activity/inference against its ID.
   const scanStartedAt = new Date().toISOString();
   const scanInsert = db
     .prepare(
@@ -73,14 +81,15 @@ export async function scanProject(opts: {
     .run(firstRepo.id, scanStartedAt, provider.name, isBootstrap ? 1 : 0);
   const scanId = Number(scanInsert.lastInsertRowid);
 
-  const activitySummaries: { repoPath: string; commitsInserted: number }[] = [];
+  const activitySummaries: ScanResult["activity"] = [];
+  const findingsSummaries: ScanResult["findings"] = [];
   let inference: RepoInference | null = null;
   let totalCost = 0;
   let partial = false;
   let errorMsg: string | undefined;
 
   try {
-    // Collect activity for every repo in the project.
+    // Step 1: repo activity (all repos)
     for (const repo of repos) {
       try {
         const summary = await collectRepoActivity(
@@ -104,7 +113,7 @@ export async function scanProject(opts: {
       }
     }
 
-    // Run AI inference against the primary repo only (Phase 3).
+    // Step 2: AI inference on primary repo
     try {
       const { inference: inf } = await inferRepo(provider, firstRepo.path);
       inference = inf;
@@ -131,6 +140,36 @@ export async function scanProject(opts: {
       errorMsg = err instanceof Error ? err.message : String(err);
       logger.warn({ err: errorMsg }, "Repo inference failed");
     }
+
+    // Step 3: fan out queries to sources (only if inference succeeded)
+    if (inference) {
+      const queries = inference.search_queries.slice(0, queriesPerSource);
+      for (const src of sources.active) {
+        try {
+          const found = await src.search({ queries, perQueryLimit: 10 });
+          const upsert = upsertFindings(db, scanId, found);
+          findingsSummaries.push({
+            source: src.name,
+            found: found.length,
+            inserted: upsert.inserted,
+            seenAgain: upsert.seenAgain,
+          });
+        } catch (err) {
+          partial = true;
+          const msg = err instanceof Error ? err.message : String(err);
+          logger.warn(
+            { source: src.name, err: msg },
+            "Source search failed",
+          );
+          findingsSummaries.push({
+            source: src.name,
+            found: 0,
+            inserted: 0,
+            seenAgain: 0,
+          });
+        }
+      }
+    }
   } finally {
     const finishedAt = new Date().toISOString();
     const status: ScanResult["status"] = errorMsg
@@ -146,7 +185,6 @@ export async function scanProject(opts: {
     ).run(finishedAt, status, totalCost || null, errorMsg ?? null, scanId);
   }
 
-  // Reload project to return fresh state
   const updatedProject = getProjectBySlug(db, projectSlug)!;
 
   return {
@@ -154,6 +192,8 @@ export async function scanProject(opts: {
     project: updatedProject,
     inference,
     activity: activitySummaries,
+    findings: findingsSummaries,
+    skippedSources: sources.skipped,
     status: errorMsg
       ? inference === null && activitySummaries.length === 0
         ? "failed"

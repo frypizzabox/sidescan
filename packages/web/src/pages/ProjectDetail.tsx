@@ -1,6 +1,7 @@
 import { Outlet, useParams } from "react-router-dom";
 import { useProject } from "@/lib/api";
 import { TabNav } from "@/components/TabNav";
+import { FindingList } from "@/components/FindingList";
 
 export function ProjectDetail() {
   const { slug } = useParams();
@@ -67,10 +68,10 @@ export function ProjectDetail() {
 
 export function NewsTab() {
   return (
-    <div className="text-zinc-500 text-sm">
-      News feed coming in Phase 4-5 — external findings + repo activity on a
-      timeline.
-    </div>
+    <FindingList
+      tab="news"
+      emptyHint="No findings yet. Run `sidescan scan <slug>` to populate."
+    />
   );
 }
 
@@ -85,8 +86,9 @@ export function InsightsTab() {
 
 export function GithubTab() {
   return (
-    <div className="text-zinc-500 text-sm">
-      Similar GitHub repos coming in Phase 4.
-    </div>
+    <FindingList
+      tab="github"
+      emptyHint="No similar GitHub repos surfaced yet. Run `sidescan scan <slug>` to populate."
+    />
   );
 }
