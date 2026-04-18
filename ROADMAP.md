@@ -4,13 +4,13 @@
 
 **Distribution model:** self-hosted service. Primary install paths: Docker Compose (clone + `docker compose up`), run from source for tinkering, and a compiled single-file binary in Phase 7. An install is one directory holding `config.yaml`, `.env`, and `data/` (SQLite DB). Not a global npm CLI.
 
-**Current status:** Phase 2 complete — config ↔ DB reconciliation, API routes, web shell with sidebar + project detail tabs.
+**Current status:** Phase 3 complete — first real AI integration. `sidescan scan <project>` reads your repo, runs a file-summary analysis through Claude, stores the inferred summary + 6-8 search queries, and captures commit activity on a timeline.
 
 ## Phases
 
 - [x] **Phase 1 — Scaffolding** — Node + npm workspaces, CLI (`init`, `start`, `version`), SQLite schema + migration runner, Hono server with `/healthz`, React + Vite + Tailwind web placeholder.
 - [x] **Phase 2 — Config ↔ DB reconciliation** — projects + repos sync from YAML into DB on start/reload; API routes for projects; `sidescan status` + `sidescan reload` CLI commands; web sidebar switcher + project detail shell with News/Insights/Github tabs.
-- [ ] **Phase 3 — Repo analyzer + AI layer + repo activity** — file-summary analysis of each repo, AI-generated project inference + search queries, commits/releases/issues pulled into a timeline.
+- [x] **Phase 3 — Repo analyzer + AI layer + repo activity** — `sidescan scan` runs end-to-end against Claude Sonnet 4.6, extracts repo inference via file-summary prompt, captures commits via `git log`. Web project page shows the inference card.
 - [ ] **Phase 4 — External sources** — GitHub similar-repo search, HN, Product Hunt, web search via Brave or Serper. All findings dedupe by `(source, url)`.
 - [ ] **Phase 5 — Scanner orchestration + cumulative diff** — bootstrap vs incremental scans, `sidescan reset <project>`, in-process scheduler (`node-cron`), AI ranker, "what's new" summaries.
 - [ ] **Phase 6 — Dashboard UI** — project list → project detail with **News | Insights | Github** tabs (Insights deferred to V2), timeline view merging repo activity + findings, ⌘K command palette, dismiss-finding.

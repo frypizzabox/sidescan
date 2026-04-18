@@ -33,6 +33,23 @@ export function ProjectDetail() {
         {project.bootstrapLookbackYears}yr lookback
       </p>
 
+      {project.aiInferredSummary ? (
+        <section className="mb-6 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3">
+          <div className="text-[11px] uppercase tracking-wide text-zinc-500 mb-1">
+            AI inference
+          </div>
+          <p className="text-sm text-zinc-800 leading-relaxed">
+            {project.aiInferredSummary}
+          </p>
+        </section>
+      ) : (
+        <section className="mb-6 rounded-lg border border-dashed border-zinc-200 px-4 py-3 text-sm text-zinc-500">
+          No AI inference yet. Run{" "}
+          <code className="text-zinc-700">sidescan scan {project.slug}</code>{" "}
+          to generate one.
+        </section>
+      )}
+
       <TabNav
         tabs={[
           { label: "News", to: base, end: true },
@@ -51,8 +68,8 @@ export function ProjectDetail() {
 export function NewsTab() {
   return (
     <div className="text-zinc-500 text-sm">
-      News feed coming in Phase 5 — external findings (HN, Product Hunt, web)
-      and repo activity on a timeline.
+      News feed coming in Phase 4-5 — external findings + repo activity on a
+      timeline.
     </div>
   );
 }
