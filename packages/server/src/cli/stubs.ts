@@ -21,11 +21,6 @@ export function registerStubs(program: Command): void {
 const STUB_COMMANDS = [
   { name: "stop", description: "Stop a running daemon", phase: "Phase 2b" },
   {
-    name: "scan [project]",
-    description: "Scan projects for new findings",
-    phase: "Phase 5",
-  },
-  {
     name: "reset <project>",
     description: "Hard-delete a project's scan history",
     phase: "Phase 5",
