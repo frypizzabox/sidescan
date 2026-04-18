@@ -1,0 +1,35 @@
+# Sidescan — self-hosted service
+#
+# Setup:
+#   1. `cp packages/server/src/config/example.yaml config.yaml` (then edit)
+#   2. Create `.env` with your API keys (see README)
+#   3. `docker compose up -d`
+#   4. Open http://localhost:3000
+#
+# The install directory (this directory) holds:
+#   - config.yaml   (your edits — mounted read-only)
+#   - .env          (API keys — mounted read-only)
+#   - data/         (SQLite DB + pidfile — owned by the container user)
+
+services:
+  sidescan:
+    build: .
+    image: sidescan:local
+    container_name: sidescan
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - SIDESCAN_DATA_DIR=/app/data
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+      - ./.env:/app/.env:ro
+      - ./data:/app/data
+      # Mount your repos read-only so the scanner can read them.
+      # Update this path to wherever your projects live on the host.
+      - ~/Projects:/repos:ro
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/healthz').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
