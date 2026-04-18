@@ -4,6 +4,13 @@ build/
 *.log
 .DS_Store
 
+# Per-install data (SQLite DB, pidfile) — never committed
+data/
+
+# Per-install config — never committed (users create from config.example.yaml)
+config.yaml
+
+# Secrets
 .env
 .env.local
 .env.*.local
