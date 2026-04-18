@@ -7,6 +7,7 @@ import { registerStart } from "@/cli/start.js";
 import { registerStatus } from "@/cli/status.js";
 import { registerReload } from "@/cli/reload.js";
 import { registerScan } from "@/cli/scan.js";
+import { registerReset } from "@/cli/reset.js";
 import { registerVersion } from "@/cli/version.js";
 import { registerStubs } from "@/cli/stubs.js";
 
@@ -39,6 +40,7 @@ registerStart(program, version);
 registerStatus(program, version);
 registerReload(program);
 registerScan(program);
+registerReset(program);
 registerVersion(program, version);
 registerStubs(program);
 

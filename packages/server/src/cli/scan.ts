@@ -68,11 +68,8 @@ export function registerScan(program: Command): void {
             }
 
             if (result.inference) {
-              const cost = result.costEstimateUSD
-                ? ` ($${result.costEstimateUSD.toFixed(4)})`
-                : "";
               console.log(
-                `  ${project.slug}   inference: ${result.inference.search_queries.length} queries, ${result.inference.inputTokens} in / ${result.inference.outputTokens} out${cost}`,
+                `  ${project.slug}   inference: ${result.inference.search_queries.length} queries, ${result.inference.inputTokens} in / ${result.inference.outputTokens} out`,
               );
             }
 
@@ -82,12 +79,27 @@ export function registerScan(program: Command): void {
               );
             }
 
+            if (result.ranked) {
+              console.log(
+                `  ${project.slug}   ranker: scored ${result.ranked.scored}, auto-dismissed ${result.ranked.dismissed}`,
+              );
+            }
+
+            if (result.whatsNew) {
+              console.log(
+                `  ${project.slug}   what's new: ${result.whatsNew.slice(0, 200)}${result.whatsNew.length > 200 ? "…" : ""}`,
+              );
+            }
+
             for (const s of result.skippedSources) {
               console.log(`  ${project.slug}   skipped ${s.name}: ${s.reason}`);
             }
 
+            const costStr = result.costEstimateUSD
+              ? ` (total $${result.costEstimateUSD.toFixed(4)})`
+              : "";
             console.log(
-              `  ${project.slug}   scan #${result.scanId} ${result.status}${result.error ? `: ${result.error}` : ""}`,
+              `  ${project.slug}   scan #${result.scanId} ${result.status}, ${result.newCount} new findings${costStr}${result.error ? `: ${result.error}` : ""}`,
             );
           }
 
