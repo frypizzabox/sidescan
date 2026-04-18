@@ -26,6 +26,18 @@ export function Sidebar() {
         >
           All projects
         </NavLink>
+        <NavLink
+          to="/across"
+          className={({ isActive }) =>
+            `block rounded px-2 py-1 text-sm ${
+              isActive
+                ? "bg-zinc-200 text-zinc-900 font-medium"
+                : "text-zinc-700 hover:bg-zinc-100"
+            }`
+          }
+        >
+          Across projects
+        </NavLink>
 
         <div className="pt-3 pb-1 px-2 text-[11px] uppercase tracking-wide text-zinc-500">
           Projects
@@ -49,7 +61,7 @@ export function Sidebar() {
             key={p.slug}
             to={`/projects/${p.slug}`}
             className={({ isActive }) =>
-              `block rounded px-2 py-1 text-sm truncate ${
+              `flex items-center gap-2 rounded px-2 py-1 text-sm truncate ${
                 isActive
                   ? "bg-zinc-200 text-zinc-900 font-medium"
                   : "text-zinc-700 hover:bg-zinc-100"
@@ -57,13 +69,19 @@ export function Sidebar() {
             }
             title={p.name}
           >
-            {p.name}
+            <span className="truncate flex-1">{p.name}</span>
+            {p.newFindingsSinceLastScan > 0 && (
+              <span className="text-[9px] uppercase tracking-wide font-medium px-1 py-0.5 rounded bg-emerald-100 text-emerald-800 whitespace-nowrap">
+                {p.newFindingsSinceLastScan}
+              </span>
+            )}
           </NavLink>
         ))}
       </nav>
 
       <div className="px-4 py-2 text-[11px] text-zinc-400 border-t border-zinc-200">
-        Phase 2 · scaffold
+        <kbd className="px-1 py-0.5 bg-zinc-200 text-zinc-600 rounded text-[10px]">⌘K</kbd>{" "}
+        for command palette
       </div>
     </aside>
   );
