@@ -2,12 +2,12 @@
 
 > A self-hostable competitive-intelligence server for solo devs. Point it at your own repos; it watches HN, Product Hunt, GitHub, and the web for nearby work.
 
-**Current status:** Phase 1 complete — scaffold, CLI skeleton, DB migrations, Hono health endpoint, placeholder web UI.
+**Current status:** Phase 2 complete — config ↔ DB reconciliation, API routes, web shell with sidebar + project detail tabs.
 
 ## Phases
 
 - [x] **Phase 1 — Scaffolding** — Node + npm workspaces, CLI (`init`, `start`, `version`), SQLite schema + migration runner, Hono server with `/healthz`, React + Vite + Tailwind web placeholder.
-- [ ] **Phase 2 — Config ↔ DB reconciliation** — on start/reload, sync projects + repos from YAML into the DB. Project switcher in the web sidebar reads from DB.
+- [x] **Phase 2 — Config ↔ DB reconciliation** — projects + repos sync from YAML into DB on start/reload; API routes for projects; `sidescan status` + `sidescan reload` CLI commands; web sidebar switcher + project detail shell with News/Insights/Github tabs.
 - [ ] **Phase 3 — Repo analyzer + AI layer + repo activity** — file-summary analysis of each repo, AI-generated project inference + search queries, commits/releases/issues pulled into a timeline.
 - [ ] **Phase 4 — External sources** — GitHub similar-repo search, HN, Product Hunt, web search via Brave or Serper. All findings dedupe by `(source, url)`.
 - [ ] **Phase 5 — Scanner orchestration + cumulative diff** — bootstrap vs incremental scans, `sidescan reset <project>`, in-process scheduler (`node-cron`), AI ranker, "what's new" summaries.
