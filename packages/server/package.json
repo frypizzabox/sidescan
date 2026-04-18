@@ -4,11 +4,20 @@
   "description": "Standalone self-hostable competitive intel server for solo devs",
   "license": "MIT",
   "type": "module",
-  "bin": { "sidescan": "./bin/sidescan" },
+  "bin": {
+    "sidescan": "./bin/sidescan"
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "files": ["dist/", "bin/", "src/config/example.yaml", "src/db/migrations/"],
-  "engines": { "node": ">=20" },
+  "files": [
+    "dist/",
+    "bin/",
+    "src/config/example.yaml",
+    "src/db/migrations/"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "build": "tsup",
     "dev": "tsx --watch src/cli/index.ts start",
@@ -16,6 +25,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.90.0",
     "@hono/node-server": "^1.13.0",
     "better-sqlite3": "^11.3.0",
     "commander": "^12.1.0",
