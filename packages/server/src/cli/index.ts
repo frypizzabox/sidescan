@@ -4,12 +4,13 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { registerInit } from "@/cli/init.js";
 import { registerStart } from "@/cli/start.js";
+import { registerStatus } from "@/cli/status.js";
+import { registerReload } from "@/cli/reload.js";
 import { registerVersion } from "@/cli/version.js";
 import { registerStubs } from "@/cli/stubs.js";
 
 function readVersion(): string {
   const here = dirname(fileURLToPath(import.meta.url));
-  // Walk up until we find package.json. Works for both src (tsx) and dist.
   const candidates = [
     join(here, "..", "..", "package.json"),
     join(here, "..", "..", "..", "package.json"),
@@ -34,6 +35,8 @@ const program = new Command()
 
 registerInit(program);
 registerStart(program, version);
+registerStatus(program, version);
+registerReload(program);
 registerVersion(program, version);
 registerStubs(program);
 
