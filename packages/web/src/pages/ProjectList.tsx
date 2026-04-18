@@ -29,10 +29,22 @@ export function ProjectList() {
             to={`/projects/${p.slug}`}
             className="block rounded-lg border border-zinc-200 hover:border-zinc-300 hover:shadow-sm p-4 transition"
           >
-            <div className="font-medium text-zinc-900">{p.name}</div>
+            <div className="flex items-start justify-between gap-2">
+              <div className="font-medium text-zinc-900 truncate">{p.name}</div>
+              {p.newFindingsSinceLastScan > 0 && (
+                <span className="text-[10px] uppercase tracking-wide font-medium px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 whitespace-nowrap">
+                  {p.newFindingsSinceLastScan} new
+                </span>
+              )}
+            </div>
             {p.description && (
-              <div className="text-sm text-zinc-600 mt-1">
+              <div className="text-sm text-zinc-600 mt-1 line-clamp-2">
                 {p.description}
+              </div>
+            )}
+            {p.aiInferredSummary && !p.description && (
+              <div className="text-sm text-zinc-600 mt-1 line-clamp-2">
+                {p.aiInferredSummary}
               </div>
             )}
             <div className="text-xs text-zinc-500 mt-2">
