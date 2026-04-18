@@ -1,0 +1,33 @@
+# Sidescan configuration.
+# All API keys live in environment variables — never in this file.
+#
+# Env vars read by the server (set in your shell or ~/.sidescan/.env):
+#   ANTHROPIC_API_KEY or OPENAI_API_KEY (depending on providers.ai)
+#   BRAVE_API_KEY    or SERPER_API_KEY  (depending on providers.search)
+#   GITHUB_TOKEN     (optional, raises GitHub API rate limits)
+#   OLLAMA_HOST      (optional, defaults to http://localhost:11434)
+
+server:
+  port: 3000
+  host: localhost
+
+providers:
+  ai: claude                    # claude | openai | ollama
+  # ai_model: claude-sonnet-4-6 # optional override
+  search: brave                 # brave | serper  (omit to disable News web search)
+
+sources:
+  github:
+    token_env: GITHUB_TOKEN
+
+projects:
+  # Example. Delete and replace with your projects.
+  - name: Example Project
+    slug: example
+    description: What this project is (helps the AI).
+    bootstrap_lookback_years: 2 # 1-10; default 2
+    scan:
+      frequency: weekly         # daily | weekly | hourly | manual
+      time: "09:00"             # HH:MM for daily/weekly
+    repos:
+      - path: ~/Projects/example
