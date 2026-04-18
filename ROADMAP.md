@@ -2,6 +2,8 @@
 
 > A self-hostable competitive-intelligence server for solo devs. Point it at your own repos; it watches HN, Product Hunt, GitHub, and the web for nearby work.
 
+**Distribution model:** self-hosted service. Primary install paths: Docker Compose (clone + `docker compose up`), run from source for tinkering, and a compiled single-file binary in Phase 7. An install is one directory holding `config.yaml`, `.env`, and `data/` (SQLite DB). Not a global npm CLI.
+
 **Current status:** Phase 2 complete — config ↔ DB reconciliation, API routes, web shell with sidebar + project detail tabs.
 
 ## Phases
@@ -21,7 +23,7 @@ Node ≥ 20 + TypeScript + Hono + `better-sqlite3` + React 19 + Vite + Tailwind 
 
 ## Principles
 
-- **Config-first.** `~/.sidescan/config.yaml` is the source of truth. CLI is operational; web UI is view-only in V1.
+- **Config-first.** `config.yaml` in your install directory is the source of truth. CLI is operational; web UI is view-only in V1.
 - **Self-host complete.** Every V1 feature works in self-host without caps.
 - **Cumulative scans.** Findings accumulate with `first_seen`/`last_seen` timestamps. "What's new since last scan" is the retention hook.
 - **BYO keys.** All API keys (AI, search, GitHub) come from env vars — never in config files.

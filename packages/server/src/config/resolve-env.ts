@@ -12,8 +12,8 @@ export interface ResolvedKeys {
 }
 
 /**
- * Loads ~/.sidescan/.env if present. Shell env still wins (dotenv does not
- * override by default).
+ * Loads .env from the current working directory if present.
+ * Shell env still wins (dotenv does not override by default).
  */
 export function loadEnvFile(): void {
   const p = envFilePath();
@@ -61,7 +61,7 @@ export function assertRequiredKeys(config: Config, keys: ResolvedKeys): string[]
   if (config.providers.ai !== "ollama" && !keys.aiKey) {
     const envName = AI_KEY_ENV[config.providers.ai];
     throw new ConfigError(
-      `Set ${envName} in your environment or ~/.sidescan/.env`,
+      `Set ${envName} in your environment or in .env`,
     );
   }
 

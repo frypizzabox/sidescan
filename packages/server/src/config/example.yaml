@@ -1,7 +1,7 @@
 # Sidescan configuration.
-# All API keys live in environment variables — never in this file.
+# API keys live in the .env file next to this one, never in this file.
 #
-# Env vars read by the server (set in your shell or ~/.sidescan/.env):
+# Env vars read by the server (from .env or your shell):
 #   ANTHROPIC_API_KEY or OPENAI_API_KEY (depending on providers.ai)
 #   BRAVE_API_KEY    or SERPER_API_KEY  (depending on providers.search)
 #   GITHUB_TOKEN     (optional, raises GitHub API rate limits)

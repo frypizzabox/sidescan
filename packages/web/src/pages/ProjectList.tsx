@@ -8,7 +8,7 @@ export function ProjectList() {
     <div className="max-w-4xl mx-auto px-8 py-10">
       <h1 className="text-2xl font-semibold mb-1">Projects</h1>
       <p className="text-sm text-zinc-500 mb-8">
-        Configure projects in <code className="text-zinc-700">~/.sidescan/config.yaml</code>.
+        Configure projects in <code className="text-zinc-700">config.yaml</code>.
       </p>
 
       {isLoading && <p className="text-zinc-500">Loading…</p>}
