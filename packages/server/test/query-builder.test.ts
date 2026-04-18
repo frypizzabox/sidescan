@@ -76,7 +76,11 @@ describe("inferRepo with mocked provider", () => {
           search_queries: ["q1", "q2", "q3", "q4", "q5", "q6"],
         }),
       );
-      const { inference, context } = await inferRepo(provider, dir);
+      const { inference, context } = await inferRepo(
+        provider,
+        { type: "local", path: dir },
+        null,
+      );
       expect(inference.summary).toBe("Demo project");
       expect(inference.search_queries).toHaveLength(6);
       expect(inference.inputTokens).toBe(100);
@@ -93,7 +97,9 @@ describe("inferRepo with mocked provider", () => {
     writeFileSync(join(dir, "README.md"), "# x");
     try {
       const provider = makeProvider("this is not json");
-      await expect(inferRepo(provider, dir)).rejects.toThrow(RuntimeError);
+      await expect(
+        inferRepo(provider, { type: "local", path: dir }, null),
+      ).rejects.toThrow(RuntimeError);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

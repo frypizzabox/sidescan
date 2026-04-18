@@ -1,4 +1,4 @@
-import type { Config } from "@/config/schema.js";
+import type { Config, RepoConfig } from "@/config/schema.js";
 import type { Db } from "@/db/connection.js";
 import {
   deleteRepo,
@@ -9,6 +9,7 @@ import {
   listProjects,
   listReposForProject,
   updateProject,
+  updateRepoBranch,
   type ProjectRow,
   type UpsertProjectInput,
 } from "@/db/queries.js";
@@ -19,6 +20,7 @@ export interface ReconcileSummary {
   projectsHidden: number;
   projectsUnhidden: number;
   reposAdded: number;
+  reposUpdated: number;
   reposRemoved: number;
 }
 
@@ -38,6 +40,7 @@ export function reconcile(db: Db, config: Config): ReconcileSummary {
     projectsHidden: 0,
     projectsUnhidden: 0,
     reposAdded: 0,
+    reposUpdated: 0,
     reposRemoved: 0,
   };
 
@@ -72,12 +75,7 @@ export function reconcile(db: Db, config: Config): ReconcileSummary {
         projectId = existing.id;
       }
 
-      reconcileRepos(
-        db,
-        projectId,
-        projectCfg.repos.map((r) => r.path),
-        summary,
-      );
+      reconcileRepos(db, projectId, projectCfg.repos, summary);
     }
 
     // Hide projects that are in DB but no longer in config
@@ -108,22 +106,27 @@ function needsUpdate(existing: ProjectRow, input: UpsertProjectInput): boolean {
 function reconcileRepos(
   db: Db,
   projectId: number,
-  configPaths: string[],
+  configRepos: RepoConfig[],
   summary: ReconcileSummary,
 ): void {
-  const configPathSet = new Set(configPaths);
+  const configByPath = new Map(configRepos.map((r) => [r.path, r]));
   const existingRepos = listReposForProject(db, projectId);
-  const existingPathSet = new Set(existingRepos.map((r) => r.path));
+  const existingByPath = new Map(existingRepos.map((r) => [r.path, r]));
 
-  for (const path of configPaths) {
-    if (!existingPathSet.has(path)) {
-      insertRepo(db, projectId, path);
+  for (const cfg of configRepos) {
+    const existing = existingByPath.get(cfg.path);
+    const cfgBranch = cfg.branch ?? null;
+    if (!existing) {
+      insertRepo(db, projectId, cfg.path, cfgBranch);
       summary.reposAdded++;
+    } else if (existing.branch !== cfgBranch) {
+      updateRepoBranch(db, existing.id, cfgBranch);
+      summary.reposUpdated++;
     }
   }
 
   for (const repo of existingRepos) {
-    if (!configPathSet.has(repo.path)) {
+    if (!configByPath.has(repo.path)) {
       deleteRepo(db, repo.id);
       summary.reposRemoved++;
     }
@@ -137,6 +140,7 @@ export function formatReconcileSummary(s: ReconcileSummary): string {
   if (s.projectsUnhidden > 0) parts.push(`${s.projectsUnhidden} restored`);
   if (s.projectsHidden > 0) parts.push(`${s.projectsHidden} hidden`);
   if (s.reposAdded > 0) parts.push(`+${s.reposAdded} repos`);
+  if (s.reposUpdated > 0) parts.push(`~${s.reposUpdated} repos`);
   if (s.reposRemoved > 0) parts.push(`-${s.reposRemoved} repos`);
   return parts.length > 0 ? parts.join(", ") : "no changes";
 }

@@ -22,6 +22,11 @@ sources:
 
 projects:
   # Example. Delete and replace with your projects.
+  #
+  # `path` accepts either:
+  #   - a GitHub URL: https://github.com/owner/repo  (recommended; works anywhere)
+  #   - an absolute filesystem path: /Users/you/code/thing  (for local clones)
+  # GitHub URLs use the GitHub API; set GITHUB_TOKEN in .env for higher rate limits.
   - name: Example Project
     slug: example
     description: What this project is (helps the AI).
@@ -30,4 +35,5 @@ projects:
       frequency: weekly         # daily | weekly | hourly | manual
       time: "09:00"             # HH:MM for daily/weekly
     repos:
-      - path: ~/Projects/example
+      - path: https://github.com/owner/repo
+        # branch: develop       # optional; defaults to the repo's default branch

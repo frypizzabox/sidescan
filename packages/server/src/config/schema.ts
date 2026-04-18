@@ -9,7 +9,13 @@ export const ScanConfigSchema = z.object({
 });
 
 export const RepoConfigSchema = z.object({
+  /**
+   * Either a GitHub URL (https://github.com/owner/repo or git@github.com:owner/repo.git)
+   * or a local filesystem path (absolute or ~-expanded). Auto-detected at runtime.
+   */
   path: z.string().min(1, "repo.path is required"),
+  /** For GitHub URLs, an optional non-default branch to scan. Ignored for local paths. */
+  branch: z.string().optional(),
 });
 
 export const ProjectConfigSchema = z.object({
