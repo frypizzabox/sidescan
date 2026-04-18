@@ -85,6 +85,82 @@ export interface FindingRow {
   created_at: string;
 }
 
+export type NewFinding = FindingRow;
+
+/**
+ * Returns findings first seen during `scanId` (the "what's new" set).
+ */
+export function listNewFindingsSince(
+  db: Db,
+  projectId: number,
+  scanId: number,
+): NewFinding[] {
+  return db
+    .prepare<[number, number], NewFinding>(
+      `SELECT f.*
+       FROM finding f
+       JOIN scan s ON f.scan_id = s.id
+       JOIN repo r ON s.repo_id = r.id
+       WHERE r.project_id = ?
+         AND f.first_seen_scan_id = ?
+         AND f.dismissed = 0
+       ORDER BY COALESCE(f.relevance_score, 0) DESC`,
+    )
+    .all(projectId, scanId);
+}
+
+/**
+ * Counts findings first seen during `scanId`. Cheaper than listing.
+ */
+export function countNewFindingsSince(
+  db: Db,
+  projectId: number,
+  scanId: number,
+): number {
+  const row = db
+    .prepare<[number, number], { c: number }>(
+      `SELECT COUNT(*) AS c
+       FROM finding f
+       JOIN scan s ON f.scan_id = s.id
+       JOIN repo r ON s.repo_id = r.id
+       WHERE r.project_id = ?
+         AND f.first_seen_scan_id = ?
+         AND f.dismissed = 0`,
+    )
+    .get(projectId, scanId);
+  return row?.c ?? 0;
+}
+
+/**
+ * Dismisses (soft-hides) a single finding by id. Returns number of rows affected.
+ */
+export function dismissFinding(db: Db, findingId: number): number {
+  const res = db
+    .prepare("UPDATE finding SET dismissed = 1 WHERE id = ?")
+    .run(findingId);
+  return res.changes;
+}
+
+/**
+ * Returns the latest successful/partial scan id for a project.
+ * Used to compute "new since last scan" counts and `since` cutoffs.
+ */
+export function getLatestScanIdForProject(
+  db: Db,
+  projectId: number,
+): number | null {
+  const row = db
+    .prepare<[number], { id: number }>(
+      `SELECT s.id FROM scan s
+       JOIN repo r ON s.repo_id = r.id
+       WHERE r.project_id = ?
+         AND s.status IN ('success', 'partial')
+       ORDER BY s.started_at DESC LIMIT 1`,
+    )
+    .get(projectId);
+  return row?.id ?? null;
+}
+
 /**
  * Lists findings for a project, optionally filtered by tab.
  * Results ordered by event_date (most recent first), falling back to

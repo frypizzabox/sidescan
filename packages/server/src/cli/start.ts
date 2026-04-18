@@ -16,20 +16,24 @@ import { openDb } from "@/db/connection.js";
 import { migrate } from "@/db/migrate.js";
 import { createServer } from "@/api/server.js";
 import type { ReloadResult } from "@/api/routes.js";
+import { createAIProvider } from "@/ai/factory.js";
+import { startScheduler } from "@/scheduler/cron.js";
 
 export function registerStart(program: Command, version: string): void {
   program
     .command("start")
-    .description("Boot the server (runs migrations, reconciles config, starts API)")
+    .description("Boot the server (runs migrations, reconciles config, starts API + scheduler)")
     .option("--port <n>", "override config port", (v) => parseInt(v, 10))
     .option("--host <h>", "override config host")
     .option("--watch-config", "auto-reload when config.yaml changes")
+    .option("--no-scheduler", "skip the in-process cron scheduler")
     .option("--verbose", "debug logging")
     .action(
       async (opts: {
         port?: number;
         host?: string;
         watchConfig?: boolean;
+        scheduler?: boolean;
         verbose?: boolean;
       }) => {
         if (opts.verbose) logger.level = "debug";
@@ -60,11 +64,28 @@ export function registerStart(program: Command, version: string): void {
             `\u2713 Reconciled projects (${formatReconcileSummary(initial)})`,
           );
 
-          // Reload handler: re-reads config and reconciles, reusing the same DB.
+          // Optional cron scheduler. Default on; user can opt out with --no-scheduler.
+          const schedulerEnabled = opts.scheduler !== false;
+          const scheduler = schedulerEnabled
+            ? startScheduler({
+                db,
+                config,
+                provider: createAIProvider(config),
+              })
+            : null;
+          if (scheduler) {
+            console.log(
+              `\u2713 Scheduler started (${scheduler.activeCount()} auto-scan projects)`,
+            );
+          }
+
+          // Reload handler: re-reads config and reconciles. Reinstalls
+          // scheduler jobs so frequency / time changes take effect.
           const onReload = (): ReloadResult => {
             try {
               const fresh = loadConfig(configPath());
               const summary = reconcile(db, fresh);
+              if (scheduler) scheduler.reload(fresh);
               const msg = formatReconcileSummary(summary);
               console.log(`\u21bb Config reloaded (${msg})`);
               return { ok: true, summary: msg };
@@ -79,9 +100,9 @@ export function registerStart(program: Command, version: string): void {
           const host = opts.host ?? config.server.host;
           const app = createServer({ db, version, onReload });
 
-          // Cleanup of pidfile on graceful exit
           const pid = pidPath();
           const cleanup = (exitCode = 0) => {
+            scheduler?.stop();
             try {
               unlinkSync(pid);
             } catch {
@@ -105,8 +126,6 @@ export function registerStart(program: Command, version: string): void {
             console.log("  Press Ctrl+C to stop.");
           });
 
-          // Reference so TS doesn't mark it unused (it's used at shutdown
-          // implicitly by SIGINT/SIGTERM when we bypass the direct close).
           void stopWatcher;
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);

@@ -13,7 +13,14 @@ import {
 } from "@/scanner/query-builder.js";
 import { collectRepoActivity } from "@/scanner/repo-activity.js";
 import { buildSources, type SourceSet } from "@/sources/factory.js";
-import { upsertFindings } from "@/db/findings.js";
+import {
+  upsertFindings,
+  listNewFindingsSince,
+  countNewFindingsSince,
+  getLatestScanIdForProject,
+} from "@/db/findings.js";
+import { rankFindings } from "@/scanner/ranker.js";
+import { generateWhatsNew } from "@/scanner/whats-new.js";
 import type { Config } from "@/config/schema.js";
 
 export interface ScanResult {
@@ -27,6 +34,9 @@ export interface ScanResult {
     inserted: number;
     seenAgain: number;
   }[];
+  ranked: { scored: number; dismissed: number } | null;
+  whatsNew: string | null;
+  newCount: number;
   skippedSources: { name: string; reason: string }[];
   status: "success" | "partial" | "failed";
   costEstimateUSD: number | null;
@@ -72,6 +82,19 @@ export async function scanProject(opts: {
     opts.bootstrap === true || repos.every((r) => !r.last_commit_sha_seen);
   const sources: SourceSet = buildSources(config);
 
+  // Incremental cutoff: skip items older than the most recent successful scan
+  // so we don't re-fetch the same long-tail results each time.
+  const lastScanId = getLatestScanIdForProject(db, project.id);
+  const lastScanRow = lastScanId
+    ? db
+        .prepare<[number], { started_at: string }>(
+          "SELECT started_at FROM scan WHERE id = ?",
+        )
+        .get(lastScanId)
+    : null;
+  const incrementalSince =
+    !isBootstrap && lastScanRow ? lastScanRow.started_at : null;
+
   const scanStartedAt = new Date().toISOString();
   const scanInsert = db
     .prepare(
@@ -83,6 +106,8 @@ export async function scanProject(opts: {
 
   const activitySummaries: ScanResult["activity"] = [];
   const findingsSummaries: ScanResult["findings"] = [];
+  let rankedStats: ScanResult["ranked"] = null;
+  let whatsNew: string | null = null;
   let inference: RepoInference | null = null;
   let totalCost = 0;
   let partial = false;
@@ -146,7 +171,11 @@ export async function scanProject(opts: {
       const queries = inference.search_queries.slice(0, queriesPerSource);
       for (const src of sources.active) {
         try {
-          const found = await src.search({ queries, perQueryLimit: 10 });
+          const found = await src.search({
+            queries,
+            perQueryLimit: 10,
+            since: incrementalSince,
+          });
           const upsert = upsertFindings(db, scanId, found);
           findingsSummaries.push({
             source: src.name,
@@ -169,6 +198,53 @@ export async function scanProject(opts: {
           });
         }
       }
+
+      // Step 4: rank just the new findings this scan
+      const newFindings = listNewFindingsSince(db, project.id, scanId);
+      if (newFindings.length > 0) {
+        try {
+          const rankInput = newFindings.map((f) => ({
+            source: f.source,
+            tab: f.tab,
+            url: f.url,
+            title: f.title,
+            snippet: f.snippet,
+            eventDate: f.event_date,
+          }));
+          const rank = await rankFindings({
+            db,
+            provider,
+            projectSummary: inference.summary,
+            scanId,
+            findings: rankInput,
+          });
+          rankedStats = { scored: rank.scored, dismissed: rank.dismissed };
+          totalCost += rank.cost;
+        } catch (err) {
+          partial = true;
+          const msg = err instanceof Error ? err.message : String(err);
+          logger.warn({ err: msg }, "Ranker failed");
+        }
+      }
+
+      // Step 5: what's-new summary for this scan (excluding auto-dismissed)
+      if (countNewFindingsSince(db, project.id, scanId) > 0) {
+        try {
+          const { content, cost } = await generateWhatsNew({
+            db,
+            provider,
+            scanId,
+            projectId: project.id,
+            projectSummary: inference.summary,
+          });
+          whatsNew = content;
+          totalCost += cost;
+        } catch (err) {
+          partial = true;
+          const msg = err instanceof Error ? err.message : String(err);
+          logger.warn({ err: msg }, "What's-new summary failed");
+        }
+      }
     }
   } finally {
     const finishedAt = new Date().toISOString();
@@ -186,6 +262,7 @@ export async function scanProject(opts: {
   }
 
   const updatedProject = getProjectBySlug(db, projectSlug)!;
+  const newCount = countNewFindingsSince(db, project.id, scanId);
 
   return {
     scanId,
@@ -193,6 +270,9 @@ export async function scanProject(opts: {
     inference,
     activity: activitySummaries,
     findings: findingsSummaries,
+    ranked: rankedStats,
+    whatsNew,
+    newCount,
     skippedSources: sources.skipped,
     status: errorMsg
       ? inference === null && activitySummaries.length === 0
