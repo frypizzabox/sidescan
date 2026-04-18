@@ -2,6 +2,8 @@ import { Outlet, useParams } from "react-router-dom";
 import { useProject } from "@/lib/api";
 import { TabNav } from "@/components/TabNav";
 import { FindingList } from "@/components/FindingList";
+import { Timeline } from "@/components/Timeline";
+import { WhatsNewCard } from "@/components/WhatsNewCard";
 
 export function ProjectDetail() {
   const { slug } = useParams();
@@ -18,7 +20,7 @@ export function ProjectDetail() {
     );
   }
 
-  const { project, repos } = data;
+  const { project, repos, latestScan } = data;
   const base = `/projects/${project.slug}`;
 
   return (
@@ -32,7 +34,19 @@ export function ProjectDetail() {
         {project.scan.time ? ` @ ${project.scan.time}` : ""} ·{" "}
         {repos.length} repo{repos.length === 1 ? "" : "s"} ·{" "}
         {project.bootstrapLookbackYears}yr lookback
+        {latestScan && (
+          <>
+            {" · "}
+            last scan{" "}
+            <span className={latestScan.status === "success" ? "" : "text-amber-700"}>
+              {latestScan.status}
+            </span>
+            {" "}({formatDate(latestScan.startedAt)})
+          </>
+        )}
       </p>
+
+      <WhatsNewCard />
 
       {project.aiInferredSummary ? (
         <section className="mb-6 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3">
@@ -67,12 +81,7 @@ export function ProjectDetail() {
 }
 
 export function NewsTab() {
-  return (
-    <FindingList
-      tab="news"
-      emptyHint="No findings yet. Run `sidescan scan <slug>` to populate."
-    />
-  );
+  return <Timeline />;
 }
 
 export function InsightsTab() {
@@ -91,4 +100,14 @@ export function GithubTab() {
       emptyHint="No similar GitHub repos surfaced yet. Run `sidescan scan <slug>` to populate."
     />
   );
+}
+
+function formatDate(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
 }
