@@ -92,7 +92,7 @@ describe("HNSource", () => {
     expect(result).toHaveLength(1);
     expect(result[0]!.url).toBe("https://example.com/tool");
     expect(result[0]!.title).toBe("Some cool tool");
-    expect(result[0]!.snippet).toContain("42 points");
+    expect(result[0]!.points).toBe(42);
     expect(result[0]!.source).toBe("hn");
   });
 
@@ -175,8 +175,11 @@ describe("GitHubSimilarSource", () => {
     expect(result[0]!.title).toBe("acme/widget");
     expect(result[0]!.tab).toBe("github");
     expect(result[0]!.similarityScore).toBeGreaterThan(0);
-    expect(result[0]!.snippet).toContain("★");
-    expect(result[0]!.snippet).toContain("Rust");
+    expect(result[0]!.owner).toBe("acme");
+    expect(result[0]!.repoName).toBe("widget");
+    expect(result[0]!.stars).toBe(1500);
+    expect(result[0]!.language).toBe("Rust");
+    expect(result[0]!.snippet).toBe("A widget");
   });
 
   it("passes Authorization header when token is provided", async () => {
