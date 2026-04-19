@@ -11,7 +11,13 @@ import {
   countNewFindingsSince,
   getLatestScanIdForProject,
   dismissFinding,
+  markFindingRead,
+  markFindingUnread,
+  markActivityRead,
+  markActivityUnread,
+  type FindingRow,
 } from "@/db/findings.js";
+import { githubRepoKey } from "@/lib/github-url.js";
 
 export interface ApiDeps {
   db: Db;
@@ -45,15 +51,54 @@ export function buildApiRoutes(deps: ApiDeps): Hono {
     if (!project || project.hidden === 1) {
       return c.json({ error: "project_not_found", slug }, 404);
     }
-    const repos = listReposForProject(deps.db, project.id).map((r) => ({
-      id: r.id,
-      path: r.path,
-      lastScannedAt: r.last_scanned_at,
-    }));
+    const repos = listReposForProject(deps.db, project.id).map((r) => {
+      const commitCount = deps.db
+        .prepare<[number], { c: number }>(
+          "SELECT COUNT(*) AS c FROM repo_activity WHERE repo_id = ?",
+        )
+        .get(r.id)?.c ?? 0;
+      return {
+        id: r.id,
+        path: r.path,
+        branch: r.branch,
+        lastScannedAt: r.last_scanned_at,
+        commitCount,
+        githubKey: githubRepoKey(r.path),
+      };
+    });
+    const scans = deps.db
+      .prepare<
+        [number],
+        {
+          id: number;
+          started_at: string;
+          finished_at: string | null;
+          status: "running" | "success" | "partial" | "failed";
+          cost_estimate: number | null;
+          is_bootstrap: number;
+        }
+      >(
+        `SELECT s.id, s.started_at, s.finished_at, s.status, s.cost_estimate, s.is_bootstrap
+         FROM scan s JOIN repo r ON s.repo_id = r.id
+         WHERE r.project_id = ?
+         ORDER BY s.started_at DESC
+         LIMIT 5`,
+      )
+      .all(project.id)
+      .map((s) => ({
+        id: s.id,
+        startedAt: s.started_at,
+        finishedAt: s.finished_at,
+        status: s.status,
+        costEstimateUSD: s.cost_estimate,
+        isBootstrap: s.is_bootstrap === 1,
+        newFindings: countNewFindingsSince(deps.db, project.id, s.id),
+      }));
     return c.json({
       project: toProjectDto(deps.db, project),
       repos,
       latestScan: latestScanDto(deps.db, project.id),
+      scans,
     });
   });
 
@@ -72,22 +117,51 @@ export function buildApiRoutes(deps: ApiDeps): Hono {
     );
     const latestScanId = getLatestScanIdForProject(deps.db, project.id);
     const rows = listFindingsForProject(deps.db, project.id, { tab, limit });
-    return c.json({
-      findings: rows.map((r) => ({
-        id: r.id,
-        source: r.source,
-        tab: r.tab,
-        url: r.url,
-        title: r.title,
-        snippet: r.snippet,
-        eventDate: r.event_date,
-        firstSeenScanId: r.first_seen_scan_id,
-        lastSeenScanId: r.last_seen_scan_id,
-        similarityScore: r.similarity_score,
-        relevanceScore: r.relevance_score,
-        isNew: latestScanId != null && r.first_seen_scan_id === latestScanId,
-      })),
+    const ownRepoKeys = new Set<string>();
+    for (const r of listReposForProject(deps.db, project.id)) {
+      const key = githubRepoKey(r.path);
+      if (key) ownRepoKeys.add(key);
+    }
+    const filtered = rows.filter((r) => {
+      if (r.source !== "github_similar") return true;
+      const key = githubRepoKey(r.url);
+      return !(key && ownRepoKeys.has(key));
     });
+    return c.json({
+      findings: filtered.map((r) => findingDto(r, latestScanId)),
+    });
+  });
+
+  api.post("/findings/:id/read", (c) => {
+    const id = parseInt(c.req.param("id"), 10);
+    if (!Number.isFinite(id)) return c.json({ error: "invalid_id" }, 400);
+    const changes = markFindingRead(deps.db, id);
+    if (changes === 0) return c.json({ error: "not_found" }, 404);
+    return c.json({ ok: true });
+  });
+
+  api.post("/findings/:id/unread", (c) => {
+    const id = parseInt(c.req.param("id"), 10);
+    if (!Number.isFinite(id)) return c.json({ error: "invalid_id" }, 400);
+    const changes = markFindingUnread(deps.db, id);
+    if (changes === 0) return c.json({ error: "not_found" }, 404);
+    return c.json({ ok: true });
+  });
+
+  api.post("/activity/:id/read", (c) => {
+    const id = parseInt(c.req.param("id"), 10);
+    if (!Number.isFinite(id)) return c.json({ error: "invalid_id" }, 400);
+    const changes = markActivityRead(deps.db, id);
+    if (changes === 0) return c.json({ error: "not_found" }, 404);
+    return c.json({ ok: true });
+  });
+
+  api.post("/activity/:id/unread", (c) => {
+    const id = parseInt(c.req.param("id"), 10);
+    if (!Number.isFinite(id)) return c.json({ error: "invalid_id" }, 400);
+    const changes = markActivityUnread(deps.db, id);
+    if (changes === 0) return c.json({ error: "not_found" }, 404);
+    return c.json({ ok: true });
   });
 
   api.post("/findings/:id/dismiss", (c) => {
@@ -117,15 +191,18 @@ export function buildApiRoutes(deps: ApiDeps): Hono {
         [number, number],
         {
           id: number;
-          kind: string;
+          kind: "commit" | "release" | "issue" | "pr";
           ref: string;
           title: string;
           event_date: string;
           url: string | null;
           repo_id: number;
+          read_at: string | null;
+          scan_id: number;
         }
       >(
-        `SELECT a.id, a.kind, a.ref, a.title, a.event_date, a.url, a.repo_id
+        `SELECT a.id, a.kind, a.ref, a.title, a.event_date, a.url, a.repo_id,
+                a.read_at, a.scan_id
          FROM repo_activity a
          JOIN repo r ON a.repo_id = r.id
          WHERE r.project_id = ?
@@ -133,7 +210,117 @@ export function buildApiRoutes(deps: ApiDeps): Hono {
          LIMIT ?`,
       )
       .all(project.id, limit);
-    return c.json({ activity: rows });
+    const latestScanId = getLatestScanIdForProject(deps.db, project.id);
+    return c.json({
+      activity: rows.map((a) => ({
+        id: a.id,
+        kind: a.kind,
+        ref: a.ref,
+        title: a.title,
+        event_date: a.event_date,
+        url: a.url,
+        repo_id: a.repo_id,
+        readAt: a.read_at,
+        isNew: latestScanId != null && a.scan_id === latestScanId,
+      })),
+    });
+  });
+
+  // Unified feed — findings + repo activity, sorted by event date desc.
+  // Replaces client-side merging in Timeline for the Feed tab.
+  api.get("/projects/:slug/feed", (c) => {
+    const slug = c.req.param("slug");
+    const project = getProjectBySlug(deps.db, slug);
+    if (!project || project.hidden === 1) {
+      return c.json({ error: "project_not_found", slug }, 404);
+    }
+    const limit = Math.min(
+      Math.max(parseInt(c.req.query("limit") ?? "200", 10) || 200, 1),
+      1000,
+    );
+    const latestScanId = getLatestScanIdForProject(deps.db, project.id);
+
+    const findings = listFindingsForProject(deps.db, project.id, {
+      tab: "news",
+      limit,
+    });
+    const activity = deps.db
+      .prepare<
+        [number, number],
+        {
+          id: number;
+          kind: "commit" | "release" | "issue" | "pr";
+          ref: string;
+          title: string;
+          event_date: string;
+          url: string | null;
+          read_at: string | null;
+          scan_id: number;
+        }
+      >(
+        `SELECT a.id, a.kind, a.ref, a.title, a.event_date, a.url, a.read_at, a.scan_id
+         FROM repo_activity a
+         JOIN repo r ON a.repo_id = r.id
+         WHERE r.project_id = ?
+         ORDER BY a.event_date DESC
+         LIMIT ?`,
+      )
+      .all(project.id, limit);
+
+    type Entry =
+      | {
+          kind: "finding";
+          id: number;
+          eventDate: string;
+          finding: ReturnType<typeof findingDto>;
+        }
+      | {
+          kind: "commit" | "release" | "issue" | "pr";
+          id: number;
+          eventDate: string;
+          activity: {
+            id: number;
+            kind: "commit" | "release" | "issue" | "pr";
+            ref: string;
+            title: string;
+            event_date: string;
+            url: string | null;
+            readAt: string | null;
+            isNew: boolean;
+          };
+        };
+
+    const entries: Entry[] = [];
+    for (const f of findings) {
+      entries.push({
+        kind: "finding",
+        id: f.id,
+        eventDate: f.event_date ?? f.created_at,
+        finding: findingDto(f, latestScanId),
+      });
+    }
+    for (const a of activity) {
+      entries.push({
+        kind: a.kind,
+        id: a.id,
+        eventDate: a.event_date,
+        activity: {
+          id: a.id,
+          kind: a.kind,
+          ref: a.ref,
+          title: a.title,
+          event_date: a.event_date,
+          url: a.url,
+          readAt: a.read_at,
+          isNew: latestScanId != null && a.scan_id === latestScanId,
+        },
+      });
+    }
+    entries.sort((a, b) =>
+      a.eventDate < b.eventDate ? 1 : a.eventDate > b.eventDate ? -1 : 0,
+    );
+
+    return c.json({ entries: entries.slice(0, limit) });
   });
 
   api.get("/projects/:slug/whats-new", (c) => {
@@ -306,6 +493,47 @@ export function buildApiRoutes(deps: ApiDeps): Hono {
     });
   });
 
+  // GitHub avatar proxy — fetches github.com/{owner}.png server-side and
+  // strips Set-Cookie. Without this, GitHub's Set-Cookie headers trigger
+  // browser console warnings about rejected cross-site cookies. Proxied
+  // images look same-origin to the browser, so no warnings, no drama.
+  api.get("/avatar/:owner", async (c) => {
+    const owner = c.req.param("owner");
+    // Conservative allowlist — GitHub usernames are alphanumeric + hyphen,
+    // 1..39 chars. Anything else is a bad request.
+    if (!/^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$/.test(owner)) {
+      return c.json({ error: "invalid_owner" }, 400);
+    }
+    const size = parseInt(c.req.query("size") ?? "80", 10);
+    const clampedSize = Math.min(Math.max(Number.isFinite(size) ? size : 80, 16), 460);
+
+    try {
+      const res = await fetch(
+        `https://github.com/${owner}.png?size=${clampedSize}`,
+        {
+          redirect: "follow",
+          headers: { "User-Agent": "sidescan/0.1" },
+        },
+      );
+      if (!res.ok || !res.body) {
+        return c.json({ error: "upstream", status: res.status }, 502);
+      }
+      const buf = await res.arrayBuffer();
+      return new Response(buf, {
+        status: 200,
+        headers: {
+          "Content-Type": res.headers.get("Content-Type") ?? "image/png",
+          // Cache aggressively — avatars change rarely; mtime update triggers
+          // a new URL in practice because sizes cache-bust via query.
+          "Cache-Control": "public, max-age=86400",
+        },
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return c.json({ error: "fetch_failed", message: msg }, 502);
+    }
+  });
+
   api.post("/reload", async (c) => {
     if (!deps.onReload) {
       return c.json({ ok: false, error: "reload_not_available" }, 503);
@@ -320,6 +548,34 @@ export function buildApiRoutes(deps: ApiDeps): Hono {
   });
 
   return api;
+}
+
+function findingDto(r: FindingRow, latestScanId: number | null) {
+  return {
+    id: r.id,
+    source: r.source,
+    tab: r.tab,
+    url: r.url,
+    title: r.title,
+    snippet: r.snippet,
+    eventDate: r.event_date,
+    firstSeenScanId: r.first_seen_scan_id,
+    lastSeenScanId: r.last_seen_scan_id,
+    similarityScore: r.similarity_score,
+    relevanceScore: r.relevance_score,
+    isNew: latestScanId != null && r.first_seen_scan_id === latestScanId,
+    readAt: r.read_at,
+    thumbnailUrl: r.thumbnail_url,
+    faviconUrl: r.favicon_url,
+    points: r.points,
+    comments: r.comments,
+    owner: r.owner,
+    repoName: r.repo_name,
+    description: r.description,
+    stars: r.stars,
+    language: r.language,
+    lastPushedAt: r.last_pushed_at,
+  };
 }
 
 function toProjectDto(db: Db, row: ProjectRow) {

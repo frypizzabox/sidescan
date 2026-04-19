@@ -22,17 +22,26 @@ export function upsertFindings(
   if (findings.length === 0) return { inserted: 0, seenAgain: 0 };
 
   // Two-step upsert: INSERT OR IGNORE tells us whether the row is new;
-  // if it wasn't, we bump last_seen_scan_id. Simpler than ON CONFLICT DO
-  // UPDATE because changes() reports 1 for that either way.
+  // if it wasn't, we bump last_seen_scan_id (keeping structured metadata
+  // like stars fresh as well — but never touching title/snippet, since
+  // later scans can have worse data, e.g. shorter HN snippets).
   const insertStmt = db.prepare(
     `INSERT OR IGNORE INTO finding
        (scan_id, source, tab, url, title, snippet, event_date,
         relevance_score, similarity_score,
+        thumbnail_url, favicon_url, points, comments,
+        owner, repo_name, description, stars, language, last_pushed_at,
         first_seen_scan_id, last_seen_scan_id, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
   const updateStmt = db.prepare(
-    `UPDATE finding SET last_seen_scan_id = ? WHERE source = ? AND url = ?`,
+    `UPDATE finding
+        SET last_seen_scan_id = ?,
+            stars           = COALESCE(?, stars),
+            last_pushed_at  = COALESCE(?, last_pushed_at),
+            points          = COALESCE(?, points),
+            comments        = COALESCE(?, comments)
+      WHERE source = ? AND url = ?`,
   );
 
   const nowISO = new Date().toISOString();
@@ -51,6 +60,16 @@ export function upsertFindings(
         f.eventDate,
         f.relevanceScore ?? null,
         f.similarityScore ?? null,
+        f.thumbnailUrl ?? null,
+        f.faviconUrl ?? null,
+        f.points ?? null,
+        f.comments ?? null,
+        f.owner ?? null,
+        f.repoName ?? null,
+        f.description ?? null,
+        f.stars ?? null,
+        f.language ?? null,
+        f.lastPushedAt ?? null,
         scanId,
         scanId,
         nowISO,
@@ -58,7 +77,15 @@ export function upsertFindings(
       if (res.changes > 0) {
         inserted++;
       } else {
-        updateStmt.run(scanId, f.source, f.url);
+        updateStmt.run(
+          scanId,
+          f.stars ?? null,
+          f.lastPushedAt ?? null,
+          f.points ?? null,
+          f.comments ?? null,
+          f.source,
+          f.url,
+        );
         seenAgain++;
       }
     }
@@ -82,6 +109,17 @@ export interface FindingRow {
   first_seen_scan_id: number;
   last_seen_scan_id: number;
   dismissed: number;
+  read_at: string | null;
+  thumbnail_url: string | null;
+  favicon_url: string | null;
+  points: number | null;
+  comments: number | null;
+  owner: string | null;
+  repo_name: string | null;
+  description: string | null;
+  stars: number | null;
+  language: string | null;
+  last_pushed_at: string | null;
   created_at: string;
 }
 
@@ -139,6 +177,64 @@ export function dismissFinding(db: Db, findingId: number): number {
     .prepare("UPDATE finding SET dismissed = 1 WHERE id = ?")
     .run(findingId);
   return res.changes;
+}
+
+export function markFindingRead(db: Db, findingId: number, nowISO = new Date().toISOString()): number {
+  const res = db
+    .prepare("UPDATE finding SET read_at = ? WHERE id = ?")
+    .run(nowISO, findingId);
+  return res.changes;
+}
+
+export function markFindingUnread(db: Db, findingId: number): number {
+  const res = db
+    .prepare("UPDATE finding SET read_at = NULL WHERE id = ?")
+    .run(findingId);
+  return res.changes;
+}
+
+export function markActivityRead(db: Db, activityId: number, nowISO = new Date().toISOString()): number {
+  const res = db
+    .prepare("UPDATE repo_activity SET read_at = ? WHERE id = ?")
+    .run(nowISO, activityId);
+  return res.changes;
+}
+
+export function markActivityUnread(db: Db, activityId: number): number {
+  const res = db
+    .prepare("UPDATE repo_activity SET read_at = NULL WHERE id = ?")
+    .run(activityId);
+  return res.changes;
+}
+
+/**
+ * Returns findings in the given scan that still need thumbnail/favicon
+ * enrichment. github_similar is skipped because it already ships structured
+ * thumbnailUrl from the source.
+ */
+export function listFindingsNeedingEnrichment(
+  db: Db,
+  scanId: number,
+): { id: number; url: string }[] {
+  return db
+    .prepare<[number], { id: number; url: string }>(
+      `SELECT id, url FROM finding
+       WHERE first_seen_scan_id = ?
+         AND source <> 'github_similar'
+         AND thumbnail_url IS NULL
+         AND favicon_url IS NULL`,
+    )
+    .all(scanId);
+}
+
+export function updateFindingEnrichment(
+  db: Db,
+  findingId: number,
+  meta: { thumbnailUrl: string | null; faviconUrl: string | null },
+): void {
+  db.prepare(
+    `UPDATE finding SET thumbnail_url = ?, favicon_url = ? WHERE id = ?`,
+  ).run(meta.thumbnailUrl, meta.faviconUrl, findingId);
 }
 
 /**

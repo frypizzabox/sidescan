@@ -16,10 +16,13 @@ import { buildSources, type SourceSet } from "@/sources/factory.js";
 import {
   upsertFindings,
   listNewFindingsSince,
+  listFindingsNeedingEnrichment,
+  updateFindingEnrichment,
   countNewFindingsSince,
   getLatestScanIdForProject,
 } from "@/db/findings.js";
 import { rankFindings } from "@/scanner/ranker.js";
+import { fetchPageMeta, mapPool } from "@/lib/og-image.js";
 import { generateWhatsNew } from "@/scanner/whats-new.js";
 import { parseRepoSpec } from "@/scanner/repo-spec.js";
 import { resolveKeys } from "@/config/resolve-env.js";
@@ -236,6 +239,25 @@ export async function scanProject(opts: {
           partial = true;
           const msg = err instanceof Error ? err.message : String(err);
           logger.warn({ err: msg }, "Ranker failed");
+        }
+      }
+
+      // Step 4b: enrich surviving findings (og:image + favicon).
+      // Best-effort. Parallel, short per-request timeout. Failures leave
+      // columns NULL — UI falls back to source-tile placeholders.
+      if (process.env.SIDESCAN_SKIP_ENRICHMENT !== "1") {
+        try {
+          const toEnrich = listFindingsNeedingEnrichment(db, scanId);
+          if (toEnrich.length > 0) {
+            await mapPool(toEnrich, 6, async (f) => {
+              const meta = await fetchPageMeta(f.url);
+              updateFindingEnrichment(db, f.id, meta);
+              return meta;
+            });
+          }
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          logger.warn({ err: msg }, "Enrichment pass failed");
         }
       }
 
