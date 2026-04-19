@@ -1,1 +1,174 @@
 @import "tailwindcss";
+
+/* ============================================================
+   Sidescan — Design System
+   Tailwind v4 @theme block. All semantic tokens live here.
+
+   Principles
+   ----------
+   1. Zinc is the ground. Every neutral reads as zinc at some L.
+   2. Source hues identify origins (HN/PH/Web/GH/Commit/Release).
+      Match tiers (green/amber/gray) are orthogonal — they signal
+      relevance, not source.
+   3. Light-first, dark-ready. Light values are defaults; `.dark`
+      override at the bottom re-points semantic tokens only.
+   4. Information density: 14px base body, 13px meta, 12px chips.
+   ============================================================ */
+
+@theme {
+  /* Neutrals */
+  --color-canvas: #ffffff;
+  --color-surface: #fafafa;
+  --color-surface-raised: #ffffff;
+  --color-surface-sunk: #f4f4f5;
+  --color-hairline: #e4e4e7;
+  --color-hairline-strong: #d4d4d8;
+
+  --color-ink-1: #18181b;
+  --color-ink-2: #3f3f46;
+  --color-ink-3: #71717a;
+  --color-ink-4: #a1a1aa;
+
+  /* Source identifiers */
+  --color-src-hn-fg: #9a3412;
+  --color-src-hn-bg: #fff7ed;
+  --color-src-hn-dot: #ea580c;
+
+  --color-src-ph-fg: #991b1b;
+  --color-src-ph-bg: #fef2f2;
+  --color-src-ph-dot: #dc2626;
+
+  --color-src-web-fg: #075985;
+  --color-src-web-bg: #f0f9ff;
+  --color-src-web-dot: #0284c7;
+
+  --color-src-gh-fg: #3f3f46;
+  --color-src-gh-bg: #f4f4f5;
+  --color-src-gh-dot: #52525b;
+
+  --color-src-commit-fg: #6b21a8;
+  --color-src-commit-bg: #faf5ff;
+  --color-src-commit-dot: #9333ea;
+
+  --color-src-release-fg: #5b21b6;
+  --color-src-release-bg: #f5f3ff;
+  --color-src-release-dot: #7c3aed;
+
+  /* Relevance tiers */
+  --color-match-high-fg: #065f46;
+  --color-match-high-bg: #ecfdf5;
+  --color-match-high-ring: #10b981;
+
+  --color-match-mid-fg: #92400e;
+  --color-match-mid-bg: #fffbeb;
+  --color-match-mid-ring: #d97706;
+
+  --color-match-low-fg: #52525b;
+  --color-match-low-bg: #f4f4f5;
+  --color-match-low-ring: #a1a1aa;
+
+  /* State */
+  --color-new-fg: #047857;
+  --color-new-bg: #d1fae5;
+  --color-new-rail: #10b981;
+
+  --color-focus-ring: #0284c7;
+  --color-selection: #dbeafe;
+
+  /* Typography */
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --text-xs: 11px;
+  --text-xs--line-height: 14px;
+  --text-sm: 13px;
+  --text-sm--line-height: 18px;
+  --text-base: 14px;
+  --text-base--line-height: 20px;
+  --text-md: 15px;
+  --text-md--line-height: 22px;
+  --text-lg: 18px;
+  --text-lg--line-height: 26px;
+  --text-xl: 22px;
+  --text-xl--line-height: 28px;
+  --text-2xl: 28px;
+  --text-2xl--line-height: 34px;
+
+  /* Layout constants */
+  --spacing-rail: 240px;
+  --spacing-page-max: 960px;
+  --spacing-page-pad: 32px;
+  --spacing-card-pad: 16px;
+
+  /* Radius */
+  --radius-xs: 3px;
+  --radius-sm: 5px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+
+  /* Shadow */
+  --shadow-1: 0 1px 0 rgba(24, 24, 27, 0.04);
+  --shadow-2: 0 1px 2px rgba(24, 24, 27, 0.06), 0 0 0 1px rgba(24, 24, 27, 0.04);
+  --shadow-pop: 0 8px 24px -8px rgba(24, 24, 27, 0.14), 0 0 0 1px rgba(24, 24, 27, 0.06);
+}
+
+html.dark {
+  --color-canvas: #09090b;
+  --color-surface: #0c0c0f;
+  --color-surface-raised: #121215;
+  --color-surface-sunk: #1c1c20;
+  --color-hairline: #242428;
+  --color-hairline-strong: #36363d;
+
+  --color-ink-1: #f4f4f5;
+  --color-ink-2: #d4d4d8;
+  --color-ink-3: #a1a1aa;
+  --color-ink-4: #71717a;
+
+  --color-src-hn-fg: #fdba74;
+  --color-src-hn-bg: rgba(234, 88, 12, 0.12);
+  --color-src-hn-dot: #fb923c;
+
+  --color-src-ph-fg: #fca5a5;
+  --color-src-ph-bg: rgba(220, 38, 38, 0.12);
+  --color-src-ph-dot: #f87171;
+
+  --color-src-web-fg: #7dd3fc;
+  --color-src-web-bg: rgba(2, 132, 199, 0.12);
+  --color-src-web-dot: #38bdf8;
+
+  --color-src-gh-fg: #d4d4d8;
+  --color-src-gh-bg: rgba(82, 82, 91, 0.25);
+  --color-src-gh-dot: #a1a1aa;
+
+  --color-src-commit-fg: #d8b4fe;
+  --color-src-commit-bg: rgba(147, 51, 234, 0.12);
+  --color-src-commit-dot: #c084fc;
+
+  --color-src-release-fg: #c4b5fd;
+  --color-src-release-bg: rgba(124, 58, 237, 0.12);
+  --color-src-release-dot: #a78bfa;
+
+  --color-match-high-fg: #6ee7b7;
+  --color-match-high-bg: rgba(16, 185, 129, 0.12);
+  --color-match-high-ring: rgba(52, 211, 153, 0.4);
+
+  --color-match-mid-fg: #fcd34d;
+  --color-match-mid-bg: rgba(217, 119, 6, 0.12);
+  --color-match-mid-ring: rgba(251, 191, 36, 0.4);
+
+  --color-match-low-fg: #a1a1aa;
+  --color-match-low-bg: rgba(82, 82, 91, 0.25);
+  --color-match-low-ring: rgba(113, 113, 122, 0.4);
+
+  --color-new-fg: #6ee7b7;
+  --color-new-bg: rgba(16, 185, 129, 0.15);
+  --color-new-rail: #34d399;
+
+  --color-focus-ring: #38bdf8;
+  --color-selection: rgba(2, 132, 199, 0.35);
+
+  --shadow-1: 0 0 0 1px rgba(255, 255, 255, 0.02);
+  --shadow-2: 0 1px 2px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  --shadow-pop: 0 8px 24px -8px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.06);
+}

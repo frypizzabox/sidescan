@@ -1,36 +1,43 @@
 import { Link } from "react-router-dom";
 import { useAcross, type FindingSource } from "@/lib/api";
+import { relativeTime } from "@/components/ui/time";
 
-const SOURCE_LABEL: Record<FindingSource, string> = {
-  hn: "Hacker News",
-  ph: "Product Hunt",
-  web: "Web",
-  github_similar: "GitHub",
+const SOURCE_TONE: Record<FindingSource, string> = {
+  hn: "text-orange-700 bg-orange-50 ring-orange-200",
+  ph: "text-red-700 bg-red-50 ring-red-200",
+  web: "text-sky-700 bg-sky-50 ring-sky-200",
+  github_similar: "text-zinc-700 bg-zinc-100 ring-zinc-200",
 };
 
-const SOURCE_COLOR: Record<FindingSource, string> = {
-  hn: "bg-orange-100 text-orange-800",
-  ph: "bg-red-100 text-red-800",
-  web: "bg-sky-100 text-sky-800",
-  github_similar: "bg-zinc-200 text-zinc-800",
+const SOURCE_SHORT: Record<FindingSource, string> = {
+  hn: "HN",
+  ph: "PH",
+  web: "WEB",
+  github_similar: "GH",
 };
 
 export function AcrossProjects() {
   const { data, isLoading, isError } = useAcross(7);
 
   if (isLoading) {
-    return <div className="px-8 py-10 text-zinc-500">Loading…</div>;
+    return <div className="px-8 py-10 text-zinc-500 text-sm">Loading…</div>;
   }
   if (isError) {
-    return <div className="px-8 py-10 text-red-600">Failed to load feed.</div>;
+    return (
+      <div className="px-8 py-10 text-red-600 text-sm">
+        Failed to load feed.
+      </div>
+    );
   }
 
   const findings = data?.findings ?? [];
 
   return (
     <div className="max-w-4xl mx-auto px-8 py-10">
-      <h1 className="text-2xl font-semibold mb-1">Across all projects</h1>
-      <p className="text-sm text-zinc-500 mb-6">
+      <h1 className="text-[22px] font-semibold text-zinc-900 tracking-[-0.01em]">
+        Across projects
+      </h1>
+      <p className="text-[13px] text-zinc-500 mt-0.5 mb-6">
         New findings from the last {data?.days ?? 7} days, sorted by relevance.
       </p>
 
@@ -41,70 +48,36 @@ export function AcrossProjects() {
         </p>
       )}
 
-      <ul className="space-y-3">
+      <div className="space-y-0">
         {findings.map((f) => (
-          <li
-            key={f.id}
-            className="rounded-lg border border-zinc-200 hover:border-zinc-300 hover:shadow-sm p-3 transition"
+          <a
+            key={`${f.projectSlug}-${f.id}`}
+            href={f.url}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="flex items-center gap-3 py-2.5 border-b border-zinc-100 hover:bg-zinc-50/70"
           >
-            <div className="flex items-start gap-3">
-              <span
-                className={`text-[10px] uppercase tracking-wide font-medium px-2 py-0.5 rounded ${SOURCE_COLOR[f.source]}`}
-              >
-                {SOURCE_LABEL[f.source]}
-              </span>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <a
-                    href={f.url}
-                    target="_blank"
-                    rel="noreferrer noopener"
-                    className="text-sm font-medium text-zinc-900 hover:underline break-words"
-                  >
-                    {f.title}
-                  </a>
-                  <Link
-                    to={`/projects/${f.projectSlug}`}
-                    className="text-[10px] uppercase tracking-wide text-zinc-500 hover:text-zinc-800"
-                  >
-                    {f.projectName}
-                  </Link>
-                </div>
-                {f.snippet && (
-                  <p className="text-xs text-zinc-600 mt-1 line-clamp-3">
-                    {f.snippet}
-                  </p>
-                )}
-                <div className="text-[11px] text-zinc-500 mt-1 flex gap-2 flex-wrap">
-                  {f.eventDate && <span>{formatDate(f.eventDate)}</span>}
-                  {f.relevanceScore != null && (
-                    <span>rel {(f.relevanceScore * 100).toFixed(0)}%</span>
-                  )}
-                  <span className="truncate">{extractHost(f.url)}</span>
-                </div>
-              </div>
-            </div>
-          </li>
+            <Link
+              to={`/projects/${f.projectSlug}/feed`}
+              onClick={(e) => e.stopPropagation()}
+              className="shrink-0 text-[11px] font-medium text-zinc-500 bg-zinc-100 px-1.5 py-0.5 rounded max-w-[140px] truncate hover:bg-zinc-200"
+            >
+              {f.projectName}
+            </Link>
+            <span
+              className={`shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold tracking-wide uppercase ring-1 ring-inset ${SOURCE_TONE[f.source]}`}
+            >
+              {SOURCE_SHORT[f.source]}
+            </span>
+            <span className="text-[13px] text-zinc-800 flex-1 truncate font-medium">
+              {f.title}
+            </span>
+            <time className="shrink-0 text-[11px] text-zinc-400 tabular-nums">
+              {relativeTime(f.eventDate)}
+            </time>
+          </a>
         ))}
-      </ul>
+      </div>
     </div>
   );
-}
-
-function extractHost(url: string): string {
-  try {
-    return new URL(url).host;
-  } catch {
-    return url;
-  }
-}
-
-function formatDate(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
 }
