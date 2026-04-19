@@ -13,6 +13,23 @@ export interface Finding {
   relevanceScore?: number | null;
   /** 0..1 — only for github_similar. */
   similarityScore?: number | null;
+
+  // Optional enrichment fields. Set by specific sources; NULL otherwise.
+  thumbnailUrl?: string | null;
+  faviconUrl?: string | null;
+
+  /** HN score / PH upvotes. */
+  points?: number | null;
+  /** HN / PH comment count. */
+  comments?: number | null;
+
+  // Competitor structured fields — github_similar populates these.
+  owner?: string | null;
+  repoName?: string | null;
+  description?: string | null;
+  stars?: number | null;
+  language?: string | null;
+  lastPushedAt?: string | null;
 }
 
 export interface SearchOptions {

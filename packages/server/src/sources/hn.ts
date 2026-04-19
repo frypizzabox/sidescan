@@ -14,6 +14,7 @@ interface HNHit {
   author?: string;
   created_at?: string;
   points?: number;
+  num_comments?: number;
 }
 
 interface HNResponse {
@@ -88,9 +89,7 @@ function toFinding(hit: HNHit): Finding | null {
 
   const snippet = hit.comment_text
     ? stripHtml(hit.comment_text).slice(0, 240)
-    : hit.points != null
-      ? `${hit.points} points on Hacker News`
-      : null;
+    : null;
 
   return {
     source: "hn",
@@ -99,6 +98,9 @@ function toFinding(hit: HNHit): Finding | null {
     title,
     snippet,
     eventDate: hit.created_at ?? null,
+    points: hit.points ?? null,
+    comments: hit.num_comments ?? null,
+    faviconUrl: "https://news.ycombinator.com/favicon.ico",
   };
 }
 

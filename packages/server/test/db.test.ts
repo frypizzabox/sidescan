@@ -21,7 +21,12 @@ describe("db migrations", () => {
 
   it("runs initial migration cleanly on empty DB", () => {
     const applied = migrate(db);
-    expect(applied).toEqual(["001_initial", "002_repo_branch"]);
+    expect(applied).toEqual([
+      "001_initial",
+      "002_repo_branch",
+      "003_read_state",
+      "004_enrichment",
+    ]);
 
     const row = db
       .prepare<[], { version: string }>(

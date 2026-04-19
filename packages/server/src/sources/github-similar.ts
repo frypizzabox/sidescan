@@ -80,27 +80,24 @@ export class GitHubSimilarSource implements Source {
       // GitHub returns a "score" that's relative to the query — useful as
       // a first-pass similarity signal. Normalize roughly to 0..1.
       const similarity = Math.min(repo.score / 20, 1);
+      const [owner, repoName] = repo.full_name.split("/");
       return {
         source: "github_similar",
         tab: "github",
         url: repo.html_url,
         title: repo.full_name,
-        snippet: buildSnippet(repo),
+        snippet: repo.description ?? null,
         eventDate: repo.pushed_at ?? repo.updated_at ?? null,
         similarityScore: similarity,
+        thumbnailUrl: owner ? `https://github.com/${owner}.png` : null,
+        faviconUrl: "https://github.githubassets.com/favicons/favicon.png",
+        owner: owner ?? null,
+        repoName: repoName ?? null,
+        description: repo.description ?? null,
+        stars: repo.stargazers_count ?? null,
+        language: repo.language ?? null,
+        lastPushedAt: repo.pushed_at ?? repo.updated_at ?? null,
       } satisfies Finding;
     });
   }
-}
-
-function buildSnippet(repo: GitHubRepo): string {
-  const parts: string[] = [];
-  if (repo.description) parts.push(repo.description);
-  const meta: string[] = [];
-  if (repo.stargazers_count != null) {
-    meta.push(`★ ${repo.stargazers_count.toLocaleString()}`);
-  }
-  if (repo.language) meta.push(repo.language);
-  if (meta.length > 0) parts.push(`(${meta.join(" · ")})`);
-  return parts.join(" ");
 }
