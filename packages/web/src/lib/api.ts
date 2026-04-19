@@ -21,7 +21,10 @@ export interface Project {
 export interface Repo {
   id: number;
   path: string;
+  branch: string | null;
   lastScannedAt: string | null;
+  commitCount: number;
+  githubKey: string | null;
 }
 
 export interface ScanSummary {
@@ -38,6 +41,7 @@ export interface ProjectDetail {
   project: Project;
   repos: Repo[];
   latestScan: ScanSummary | null;
+  scans: ScanSummary[];
 }
 
 export type FindingSource = "github_similar" | "hn" | "ph" | "web";
@@ -56,6 +60,19 @@ export interface Finding {
   similarityScore: number | null;
   relevanceScore: number | null;
   isNew: boolean;
+  readAt: string | null;
+  thumbnailUrl: string | null;
+  faviconUrl: string | null;
+  points: number | null;
+  comments: number | null;
+  domain?: string | null;
+  // Competitor structured fields — github_similar only; null otherwise.
+  owner: string | null;
+  repoName: string | null;
+  description: string | null;
+  stars: number | null;
+  language: string | null;
+  lastPushedAt: string | null;
 }
 
 export interface RepoActivity {
@@ -65,8 +82,26 @@ export interface RepoActivity {
   title: string;
   event_date: string;
   url: string | null;
-  repo_id: number;
+  repo_id?: number;
+  isNew?: boolean;
+  readAt?: string | null;
 }
+
+export type FeedEntry =
+  | {
+      kind: "finding";
+      id: number;
+      eventDate: string;
+      finding: Finding;
+    }
+  | {
+      kind: "commit" | "release" | "issue" | "pr";
+      id: number;
+      eventDate: string;
+      activity: RepoActivity;
+    };
+
+export type ReadKind = "finding" | "activity";
 
 export interface WhatsNewResponse {
   content: string | null;
@@ -199,6 +234,91 @@ export function useScanDetail(slug: string | undefined, scanId: number | undefin
     enabled: !!slug && scanId != null,
     queryFn: () =>
       request<ScanDetail>(`/api/projects/${slug}/scans/${scanId}`),
+  });
+}
+
+export function useFeed(slug: string | undefined, limit = 200) {
+  return useQuery({
+    queryKey: ["feed", slug, limit],
+    enabled: !!slug,
+    queryFn: async () => {
+      const { entries } = await request<{ entries: FeedEntry[] }>(
+        `/api/projects/${slug}/feed?limit=${limit}`,
+      );
+      return entries;
+    },
+  });
+}
+
+export function useMarkRead() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      kind,
+      id,
+      unread,
+    }: {
+      kind: ReadKind;
+      id: number;
+      unread?: boolean;
+    }) => {
+      const path = kind === "finding" ? "findings" : "activity";
+      const action = unread ? "unread" : "read";
+      return request<{ ok: boolean }>(`/api/${path}/${id}/${action}`, {
+        method: "POST",
+      });
+    },
+    onMutate: async ({ kind, id, unread }) => {
+      const nowISO = unread ? null : new Date().toISOString();
+      // Optimistic: patch every cached feed/findings/activity response in place.
+      qc.setQueriesData<{ entries: FeedEntry[] } | FeedEntry[] | undefined>(
+        { queryKey: ["feed"] },
+        (prev) => {
+          if (!prev) return prev;
+          const entries = Array.isArray(prev) ? prev : prev.entries;
+          const next = entries.map((e) => {
+            if (kind === "finding" && e.kind === "finding" && e.finding.id === id) {
+              return { ...e, finding: { ...e.finding, readAt: nowISO } };
+            }
+            if (
+              kind === "activity" &&
+              e.kind !== "finding" &&
+              e.activity.id === id
+            ) {
+              return { ...e, activity: { ...e.activity, readAt: nowISO } };
+            }
+            return e;
+          });
+          return Array.isArray(prev) ? next : { ...prev, entries: next };
+        },
+      );
+      qc.setQueriesData<{ findings: Finding[] } | undefined>(
+        { queryKey: ["findings"] },
+        (prev) => {
+          if (!prev || kind !== "finding") return prev;
+          return {
+            ...prev,
+            findings: prev.findings.map((f) =>
+              f.id === id ? { ...f, readAt: nowISO } : f,
+            ),
+          };
+        },
+      );
+      qc.setQueriesData<{ activity: RepoActivity[] } | undefined>(
+        { queryKey: ["repo-activity"] },
+        (prev) => {
+          if (!prev || kind !== "activity") return prev;
+          return {
+            ...prev,
+            activity: prev.activity.map((a) =>
+              a.id === id ? { ...a, readAt: nowISO } : a,
+            ),
+          };
+        },
+      );
+    },
+    // No onSettled invalidate — optimistic update is authoritative; a hard
+    // refetch on every read mark would churn the feed list in place.
   });
 }
 
