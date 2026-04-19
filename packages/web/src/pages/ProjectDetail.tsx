@@ -1,20 +1,19 @@
-import { Outlet, useParams } from "react-router-dom";
-import { useProject } from "@/lib/api";
-import { TabNav } from "@/components/TabNav";
-import { FindingList } from "@/components/FindingList";
-import { Timeline } from "@/components/Timeline";
-import { WhatsNewCard } from "@/components/WhatsNewCard";
+import { NavLink, Outlet, useParams } from "react-router-dom";
+import { useProject, useFindings } from "@/lib/api";
+import { useFeedUnreadCount } from "@/components/feed/FeedScreen";
+import { Icon } from "@/components/ui/Icon";
+import { absoluteTime } from "@/components/ui/time";
 
 export function ProjectDetail() {
   const { slug } = useParams();
   const { data, isLoading, isError } = useProject(slug);
 
   if (isLoading) {
-    return <div className="px-8 py-10 text-zinc-500">Loading…</div>;
+    return <div className="px-8 py-10 text-zinc-500 text-sm">Loading…</div>;
   }
   if (isError || !data) {
     return (
-      <div className="px-8 py-10 text-red-600">
+      <div className="px-8 py-10 text-red-600 text-sm">
         Project not found or failed to load.
       </div>
     );
@@ -25,89 +24,142 @@ export function ProjectDetail() {
 
   return (
     <div className="max-w-5xl mx-auto px-8 py-10">
-      <h1 className="text-2xl font-semibold mb-1">{project.name}</h1>
-      {project.description && (
-        <p className="text-sm text-zinc-600 mb-1">{project.description}</p>
-      )}
-      <p className="text-xs text-zinc-500 mb-6">
-        {project.scan.frequency}
-        {project.scan.time ? ` @ ${project.scan.time}` : ""} ·{" "}
-        {repos.length} repo{repos.length === 1 ? "" : "s"} ·{" "}
-        {project.bootstrapLookbackYears}yr lookback
-        {latestScan && (
-          <>
-            {" · "}
-            last scan{" "}
-            <span className={latestScan.status === "success" ? "" : "text-amber-700"}>
-              {latestScan.status}
-            </span>
-            {" "}({formatDate(latestScan.startedAt)})
-          </>
+      <div className="mb-4">
+        <h1 className="text-[22px] font-semibold text-zinc-900 tracking-[-0.01em]">
+          {project.name}
+        </h1>
+        {project.description && (
+          <p className="text-[13px] text-zinc-500 mt-0.5">
+            {project.description}
+          </p>
         )}
-      </p>
+        <div className="mt-1.5 flex items-center gap-2 text-[11px] font-mono text-zinc-400 flex-wrap">
+          <span>
+            {project.scan.frequency}
+            {project.scan.time ? ` @ ${project.scan.time}` : ""}
+          </span>
+          <span>·</span>
+          <span>
+            {repos.length} repo{repos.length === 1 ? "" : "s"}
+          </span>
+          <span>·</span>
+          <span>{project.bootstrapLookbackYears}yr lookback</span>
+          {latestScan && (
+            <>
+              <span>·</span>
+              <span>
+                last scan{" "}
+                <span
+                  className={
+                    latestScan.status === "success"
+                      ? "text-emerald-600"
+                      : "text-amber-600"
+                  }
+                >
+                  {latestScan.status}
+                </span>{" "}
+                ({absoluteTime(latestScan.startedAt)})
+              </span>
+            </>
+          )}
+        </div>
+      </div>
 
-      <WhatsNewCard />
-
-      {project.aiInferredSummary ? (
-        <section className="mb-6 rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3">
-          <div className="text-[11px] uppercase tracking-wide text-zinc-500 mb-1">
+      {project.aiInferredSummary && (
+        <div className="mb-4 rounded-md bg-white ring-1 ring-inset ring-zinc-200 p-3">
+          <div className="inline-flex items-center gap-1.5 text-[10px] font-bold tracking-wider uppercase text-zinc-400 mb-1">
+            <Icon.Sparkle className="w-3 h-3" />
             AI inference
           </div>
-          <p className="text-sm text-zinc-800 leading-relaxed">
+          <p className="text-[13px] leading-[20px] text-zinc-700 text-pretty">
             {project.aiInferredSummary}
           </p>
-        </section>
-      ) : (
-        <section className="mb-6 rounded-lg border border-dashed border-zinc-200 px-4 py-3 text-sm text-zinc-500">
-          No AI inference yet. Run{" "}
-          <code className="text-zinc-700">sidescan scan {project.slug}</code>{" "}
-          to generate one.
-        </section>
+        </div>
       )}
 
-      <TabNav
-        tabs={[
-          { label: "News", to: base, end: true },
-          { label: "Insights", to: `${base}/insights` },
-          { label: "Github", to: `${base}/github` },
-        ]}
-      />
+      <ProjectTabs base={base} slug={project.slug} />
 
-      <div className="py-6">
+      <div className="mt-4">
         <Outlet />
       </div>
     </div>
   );
 }
 
-export function NewsTab() {
-  return <Timeline />;
-}
+function ProjectTabs({ base, slug }: { base: string; slug: string }) {
+  const feedUnread = useFeedUnreadCount(slug);
+  const competitorsUnread = useCompetitorsUnreadCount(slug);
 
-export function InsightsTab() {
+  const tab = (
+    to: string,
+    label: string,
+    count: number,
+    end = false,
+    v2 = false,
+  ) => (
+    <NavLink
+      to={to}
+      end={end}
+      className={({ isActive }) =>
+        `relative inline-flex items-center gap-1.5 px-3 py-2 text-[13px] font-medium border-b-2 transition-colors ${
+          isActive
+            ? "border-zinc-900 text-zinc-900"
+            : "border-transparent text-zinc-500 hover:text-zinc-800"
+        }`
+      }
+    >
+      {({ isActive }) => (
+        <>
+          {label}
+          {count > 0 && (
+            <span
+              className={`inline-flex items-center px-1 min-w-[18px] h-[16px] justify-center rounded text-[10px] font-semibold tabular-nums ${
+                isActive
+                  ? "bg-emerald-100 text-emerald-800"
+                  : "bg-zinc-100 text-zinc-600"
+              }`}
+            >
+              {count}
+            </span>
+          )}
+          {v2 && (
+            <span className="ml-0.5 text-[9px] uppercase tracking-wider text-zinc-400">
+              V2
+            </span>
+          )}
+        </>
+      )}
+    </NavLink>
+  );
+
   return (
-    <div className="text-zinc-500 text-sm">
-      Insights tab is <strong className="text-zinc-700">V2 only</strong>.
-      Cross-project comparisons, peer deltas.
+    <div className="flex items-center border-b border-zinc-200 -mx-1">
+      {tab(`${base}/feed`, "Feed", feedUnread)}
+      {tab(`${base}/project`, "Project", 0)}
+      {tab(`${base}/competitors`, "Competitors", competitorsUnread)}
+      {tab(`${base}/insights`, "Insights", 0, false, true)}
     </div>
   );
 }
 
-export function GithubTab() {
-  return (
-    <FindingList
-      tab="github"
-      emptyHint="No similar GitHub repos surfaced yet. Run `sidescan scan <slug>` to populate."
-    />
+function useCompetitorsUnreadCount(slug: string | undefined): number {
+  const { data } = useFindings(slug, "github");
+  if (!data) return 0;
+  return data.findings.reduce(
+    (n, f) => n + (f.isNew && f.readAt == null ? 1 : 0),
+    0,
   );
 }
 
-function formatDate(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
+export function InsightsTab() {
+  return (
+    <div className="py-12 text-center">
+      <div className="inline-flex items-center gap-1.5 text-[10px] font-semibold tracking-wider uppercase text-zinc-400 mb-2">
+        V2 only
+      </div>
+      <p className="text-[14px] text-zinc-500">
+        Cross-project comparisons, peer deltas.
+      </p>
+    </div>
+  );
 }
