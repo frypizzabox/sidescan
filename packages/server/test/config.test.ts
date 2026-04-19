@@ -23,7 +23,7 @@ describe("parseConfig", () => {
     expect(first.slug).toBe("example");
     expect(first.scan.frequency).toBe("weekly");
     expect(first.bootstrap_lookback_years).toBe(2);
-    expect(first.repos[0]!.path).toContain("Projects/example");
+    expect(first.repos[0]!.path).toContain("github.com/owner/repo");
   });
 
   it("applies defaults for missing optional fields", () => {
