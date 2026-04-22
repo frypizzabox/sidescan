@@ -14,11 +14,18 @@ interface LobstersStory {
   comments_count?: number;
   comments_url?: string;
   description?: string;
+  tags?: string[];
 }
 
-const ENDPOINT = "https://lobste.rs/search.json";
+const ENDPOINT = "https://lobste.rs/newest.json";
 const USER_AGENT = "sidescan/0.1";
 
+/**
+ * Lobste.rs has no public JSON search endpoint — `/search` is HTML-only
+ * and rejects JSON-format params. We fall back to polling the newest-stories
+ * feed and filtering client-side by whether the query's significant tokens
+ * appear in the title/description/tags.
+ */
 export class LobstersSource implements Source {
   readonly name = "lobsters" as const;
   readonly tab = "news" as const;
@@ -27,65 +34,72 @@ export class LobstersSource implements Source {
   async search(opts: SearchOptions): Promise<Finding[]> {
     const perQueryLimit = opts.perQueryLimit ?? 10;
     const maxFindings = opts.maxFindings ?? 50;
-    const all: Finding[] = [];
 
+    let stories: LobstersStory[];
+    try {
+      stories = await fetchNewest();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      logger.warn({ source: "lobsters", err: msg }, "Lobsters fetch failed");
+      return [];
+    }
+
+    const sinceMs = opts.since ? Date.parse(opts.since) : 0;
+    const fresh = stories.filter(
+      (s) => Date.parse(s.created_at) >= sinceMs,
+    );
+
+    const all: Finding[] = [];
     for (const query of opts.queries) {
-      try {
-        const results = await this.searchOne(
-          query,
-          perQueryLimit,
-          opts.since,
-        );
-        all.push(...results);
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
-        logger.warn(
-          { source: "lobsters", query, err: msg },
-          "Lobsters search failed",
-        );
-      }
+      const matches = fresh
+        .filter((s) => storyMatchesQuery(s, query))
+        .slice(0, perQueryLimit)
+        .map(toFinding);
+      all.push(...matches);
     }
 
     return dedupeAndCap(all, maxFindings);
   }
-
-  private async searchOne(
-    query: string,
-    limit: number,
-    since: string | null | undefined,
-  ): Promise<Finding[]> {
-    const params = new URLSearchParams({
-      q: query,
-      what: "stories",
-      order: "newest",
-    });
-    const res = await fetch(`${ENDPOINT}?${params.toString()}`, {
-      headers: {
-        Accept: "application/json",
-        "User-Agent": USER_AGENT,
-      },
-    });
-    if (!res.ok) {
-      throw new Error(`Lobsters ${res.status}: ${await res.text()}`);
-    }
-    const body: unknown = await res.json();
-    const stories = extractStories(body);
-    const sinceMs = since ? Date.parse(since) : 0;
-
-    return stories
-      .filter((s) => Date.parse(s.created_at) >= sinceMs)
-      .slice(0, limit)
-      .map(toFinding);
-  }
 }
 
-function extractStories(body: unknown): LobstersStory[] {
-  if (Array.isArray(body)) return body as LobstersStory[];
-  if (body && typeof body === "object") {
-    const maybe = (body as { stories?: unknown }).stories;
-    if (Array.isArray(maybe)) return maybe as LobstersStory[];
+async function fetchNewest(): Promise<LobstersStory[]> {
+  const res = await fetch(ENDPOINT, {
+    headers: {
+      Accept: "application/json",
+      "User-Agent": USER_AGENT,
+    },
+  });
+  if (!res.ok) {
+    throw new Error(`Lobsters ${res.status}: ${await res.text()}`);
   }
-  return [];
+  const body: unknown = await res.json();
+  return Array.isArray(body) ? (body as LobstersStory[]) : [];
+}
+
+/**
+ * Simple relevance test: every token in the query (length >= 3, lowercase)
+ * must appear somewhere in the story's title, description, or tags. Misses
+ * phrase-level intent, but catches "react hooks" against a "React Hooks
+ * deep-dive" story.
+ */
+export function storyMatchesQuery(
+  story: LobstersStory,
+  query: string,
+): boolean {
+  const tokens = query
+    .toLowerCase()
+    .split(/\s+/)
+    .map((t) => t.replace(/[^a-z0-9]/g, ""))
+    .filter((t) => t.length >= 3);
+  if (tokens.length === 0) return false;
+  const haystack = [
+    story.title ?? "",
+    story.description ?? "",
+    ...(story.tags ?? []),
+  ]
+    .join(" ")
+    .toLowerCase();
+  return tokens.every((t) => haystack.includes(t));
 }
 
 function toFinding(s: LobstersStory): Finding {

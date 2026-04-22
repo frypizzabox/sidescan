@@ -1,6 +1,6 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { RedditSource } from "@/sources/reddit.js";
-import { LobstersSource } from "@/sources/lobsters.js";
+import { LobstersSource, storyMatchesQuery } from "@/sources/lobsters.js";
 import { DevToSource, normaliseTag } from "@/sources/devto.js";
 
 function fetchMock(byPattern: Record<string, unknown>): typeof fetch {
@@ -186,96 +186,125 @@ describe("LobstersSource", () => {
     globalThis.fetch = originalFetch;
   });
 
-  it("maps lobsters search results (array response) to findings", async () => {
+  it("fetches /newest.json and returns stories that match the query tokens", async () => {
     globalThis.fetch = fetchMock({
-      "lobste.rs/search": [
+      "lobste.rs/newest.json": [
         {
-          short_id: "abc",
-          short_id_url: "https://lobste.rs/s/abc",
-          title: "Thing",
-          url: "https://example.com/thing",
-          created_at: "2026-04-01T10:00:00Z",
+          short_id: "a",
+          short_id_url: "https://lobste.rs/s/a",
+          title: "React hooks deep-dive",
+          url: "https://example.com/a",
+          created_at: "2026-04-20T00:00:00Z",
           score: 17,
           comments_count: 3,
-          description: "a description",
+          description: "hooks patterns",
+          tags: ["javascript", "react"],
         },
-      ],
-    });
-
-    const result = await new LobstersSource().search({ queries: ["thing"] });
-    expect(result).toHaveLength(1);
-    expect(result[0]!.source).toBe("lobsters");
-    expect(result[0]!.url).toBe("https://example.com/thing");
-    expect(result[0]!.points).toBe(17);
-    expect(result[0]!.comments).toBe(3);
-    expect(result[0]!.snippet).toBe("a description");
-  });
-
-  it("accepts a wrapped {stories: [...]} response shape", async () => {
-    globalThis.fetch = fetchMock({
-      "lobste.rs/search": {
-        stories: [
-          {
-            short_id: "x",
-            short_id_url: "https://lobste.rs/s/x",
-            title: "X",
-            url: "https://example.com/x",
-            created_at: "2026-04-01T10:00:00Z",
-            score: 1,
-          },
-        ],
-      },
-    });
-
-    const result = await new LobstersSource().search({ queries: ["x"] });
-    expect(result).toHaveLength(1);
-    expect(result[0]!.title).toBe("X");
-  });
-
-  it("computes points from upvotes/downvotes when score is absent", async () => {
-    globalThis.fetch = fetchMock({
-      "lobste.rs/search": [
         {
-          short_id: "x",
-          short_id_url: "https://lobste.rs/s/x",
-          title: "X",
-          url: "https://example.com/x",
-          created_at: "2026-04-01T10:00:00Z",
-          upvotes: 10,
-          downvotes: 3,
-        },
-      ],
-    });
-
-    const result = await new LobstersSource().search({ queries: ["x"] });
-    expect(result[0]!.points).toBe(7);
-  });
-
-  it("filters stories older than since", async () => {
-    globalThis.fetch = fetchMock({
-      "lobste.rs/search": [
-        {
-          short_id: "new",
-          short_id_url: "https://lobste.rs/s/new",
-          title: "New",
-          url: "https://example.com/new",
+          short_id: "b",
+          short_id_url: "https://lobste.rs/s/b",
+          title: "Rust async runtime",
+          url: "https://example.com/b",
           created_at: "2026-04-20T00:00:00Z",
-        },
-        {
-          short_id: "old",
-          short_id_url: "https://lobste.rs/s/old",
-          title: "Old",
-          url: "https://example.com/old",
-          created_at: "2020-01-01T00:00:00Z",
+          description: "tokio internals",
+          tags: ["rust"],
         },
       ],
     });
 
     const result = await new LobstersSource().search({
-      queries: ["q"],
+      queries: ["React hooks"],
+    });
+    expect(result.map((r) => r.title)).toEqual(["React hooks deep-dive"]);
+    expect(result[0]!.points).toBe(17);
+  });
+
+  it("computes points from upvotes/downvotes when score is absent", async () => {
+    globalThis.fetch = fetchMock({
+      "lobste.rs/newest.json": [
+        {
+          short_id: "x",
+          short_id_url: "https://lobste.rs/s/x",
+          title: "foo topic article",
+          url: "https://example.com/x",
+          created_at: "2026-04-20T00:00:00Z",
+          upvotes: 10,
+          downvotes: 3,
+          tags: ["foo"],
+        },
+      ],
+    });
+
+    const result = await new LobstersSource().search({ queries: ["foo topic"] });
+    expect(result[0]!.points).toBe(7);
+  });
+
+  it("filters stories older than since", async () => {
+    globalThis.fetch = fetchMock({
+      "lobste.rs/newest.json": [
+        {
+          short_id: "new",
+          short_id_url: "https://lobste.rs/s/new",
+          title: "React state primer",
+          url: "https://example.com/new",
+          created_at: "2026-04-20T00:00:00Z",
+          tags: ["react"],
+        },
+        {
+          short_id: "old",
+          short_id_url: "https://lobste.rs/s/old",
+          title: "React state primer",
+          url: "https://example.com/old",
+          created_at: "2020-01-01T00:00:00Z",
+          tags: ["react"],
+        },
+      ],
+    });
+
+    const result = await new LobstersSource().search({
+      queries: ["React state"],
       since: "2026-04-15T00:00:00Z",
     });
-    expect(result.map((r) => r.title)).toEqual(["New"]);
+    expect(result.map((r) => r.url)).toEqual(["https://example.com/new"]);
+  });
+
+  it("returns empty array if the feed call fails (logs a warn)", async () => {
+    globalThis.fetch = (async () =>
+      new Response("boom", { status: 500 })) as typeof fetch;
+
+    const result = await new LobstersSource().search({ queries: ["react"] });
+    expect(result).toEqual([]);
+  });
+});
+
+describe("storyMatchesQuery", () => {
+  const story = {
+    short_id: "x",
+    short_id_url: "https://lobste.rs/s/x",
+    title: "React Hooks deep dive",
+    url: "https://example.com/x",
+    created_at: "2026-04-20T00:00:00Z",
+    description: "patterns and anti-patterns",
+    tags: ["javascript", "react"],
+  };
+
+  it("matches when every >=3-char token is in title/description/tags", () => {
+    expect(storyMatchesQuery(story, "React hooks")).toBe(true);
+    expect(storyMatchesQuery(story, "React patterns")).toBe(true);
+    expect(storyMatchesQuery(story, "javascript")).toBe(true);
+  });
+
+  it("misses when any token is absent", () => {
+    expect(storyMatchesQuery(story, "React Rust")).toBe(false);
+  });
+
+  it("ignores sub-3-char tokens so stopwords don't block matches", () => {
+    // "a" is too short to be a required token; the rest all match.
+    expect(storyMatchesQuery(story, "a React hooks deep dive")).toBe(true);
+  });
+
+  it("returns false when query has no significant tokens", () => {
+    expect(storyMatchesQuery(story, "a b")).toBe(false);
   });
 });
 
