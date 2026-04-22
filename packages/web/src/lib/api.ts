@@ -255,6 +255,39 @@ export function useSparkline(slug: string | undefined, days = 30) {
   });
 }
 
+export interface InsightBullet {
+  title: string;
+  rationale: string;
+  findingIds: number[];
+}
+
+export interface InsightsFindingRef {
+  id: number;
+  source: FindingSource;
+  title: string;
+  url: string;
+  owner: string | null;
+  repoName: string | null;
+  points: number | null;
+}
+
+export interface InsightsResponse {
+  scanId: number | null;
+  generatedAt: string | null;
+  market: InsightBullet[];
+  suggestions: InsightBullet[];
+  findings: Record<number, InsightsFindingRef>;
+}
+
+export function useInsights(slug: string | undefined) {
+  return useQuery({
+    queryKey: ["insights", slug],
+    enabled: !!slug,
+    queryFn: () =>
+      request<InsightsResponse>(`/api/projects/${slug}/insights`),
+  });
+}
+
 export function useAcross(days = 7) {
   return useQuery({
     queryKey: ["across", days],

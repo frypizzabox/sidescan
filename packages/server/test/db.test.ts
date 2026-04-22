@@ -27,6 +27,7 @@ describe("db migrations", () => {
       "003_read_state",
       "004_enrichment",
       "005_source_catalog",
+      "006_insights_kind",
     ]);
 
     const row = db

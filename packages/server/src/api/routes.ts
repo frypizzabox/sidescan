@@ -23,6 +23,30 @@ import {
 } from "@/db/findings.js";
 import { githubRepoKey } from "@/lib/github-url.js";
 
+interface InsightBullet {
+  title: string;
+  rationale: string;
+  findingIds: number[];
+}
+
+function parseBulletArray(raw: string | undefined): InsightBullet[] {
+  if (!raw) return [];
+  try {
+    const data = JSON.parse(raw);
+    if (!Array.isArray(data)) return [];
+    return data.filter(
+      (b): b is InsightBullet =>
+        !!b &&
+        typeof b === "object" &&
+        typeof (b as InsightBullet).title === "string" &&
+        typeof (b as InsightBullet).rationale === "string" &&
+        Array.isArray((b as InsightBullet).findingIds),
+    );
+  } catch {
+    return [];
+  }
+}
+
 export interface ApiDeps {
   db: Db;
   version: string;
@@ -363,6 +387,107 @@ export function buildApiRoutes(deps: ApiDeps): Hono {
       counts: countNewFindingsBySource(deps.db, project.id, latestScanId),
       activityCounts: countNewActivityByKind(deps.db, project.id, latestScanId),
       highlights: listDigestHighlights(deps.db, project.id, latestScanId, 5),
+    });
+  });
+
+  api.get("/projects/:slug/insights", (c) => {
+    const slug = c.req.param("slug");
+    const project = getProjectBySlug(deps.db, slug);
+    if (!project || project.hidden === 1) {
+      return c.json({ error: "project_not_found", slug }, 404);
+    }
+    const latestScanId = getLatestScanIdForProject(deps.db, project.id);
+    if (!latestScanId) {
+      return c.json({
+        scanId: null,
+        generatedAt: null,
+        market: [],
+        suggestions: [],
+        findings: {},
+      });
+    }
+
+    const rows = deps.db
+      .prepare<
+        [number],
+        { kind: string; content_md: string; created_at: string }
+      >(
+        `SELECT kind, content_md, created_at FROM ai_summary
+         WHERE scan_id = ?
+           AND kind IN ('insights_market', 'insights_suggestions')
+         ORDER BY id DESC`,
+      )
+      .all(latestScanId);
+
+    const byKind = new Map<string, { content: string; createdAt: string }>();
+    for (const row of rows) {
+      if (!byKind.has(row.kind)) {
+        byKind.set(row.kind, { content: row.content_md, createdAt: row.created_at });
+      }
+    }
+
+    const market = parseBulletArray(byKind.get("insights_market")?.content);
+    const suggestions = parseBulletArray(
+      byKind.get("insights_suggestions")?.content,
+    );
+
+    const cited = new Set<number>();
+    for (const b of market) for (const id of b.findingIds) cited.add(id);
+    for (const b of suggestions) for (const id of b.findingIds) cited.add(id);
+
+    const findingsMap: Record<number, {
+      id: number;
+      source: string;
+      title: string;
+      url: string;
+      owner: string | null;
+      repoName: string | null;
+      points: number | null;
+    }> = {};
+    if (cited.size > 0) {
+      const placeholders = Array.from(cited).map(() => "?").join(",");
+      const ids = Array.from(cited);
+      const findingRows = deps.db
+        .prepare<
+          number[],
+          {
+            id: number;
+            source: string;
+            title: string;
+            url: string;
+            owner: string | null;
+            repo_name: string | null;
+            points: number | null;
+          }
+        >(
+          `SELECT id, source, title, url, owner, repo_name, points
+           FROM finding WHERE id IN (${placeholders})`,
+        )
+        .all(...ids);
+      for (const f of findingRows) {
+        findingsMap[f.id] = {
+          id: f.id,
+          source: f.source,
+          title: f.title,
+          url: f.url,
+          owner: f.owner,
+          repoName: f.repo_name,
+          points: f.points,
+        };
+      }
+    }
+
+    const generatedAt =
+      byKind.get("insights_market")?.createdAt ??
+      byKind.get("insights_suggestions")?.createdAt ??
+      null;
+
+    return c.json({
+      scanId: latestScanId,
+      generatedAt,
+      market,
+      suggestions,
+      findings: findingsMap,
     });
   });
 

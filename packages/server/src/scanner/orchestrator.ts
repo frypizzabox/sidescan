@@ -24,6 +24,7 @@ import {
 import { rankFindings } from "@/scanner/ranker.js";
 import { fetchPageMeta, mapPool } from "@/lib/og-image.js";
 import { generateWhatsNew } from "@/scanner/whats-new.js";
+import { generateInsights } from "@/scanner/insights.js";
 import { parseRepoSpec } from "@/scanner/repo-spec.js";
 import { resolveKeys } from "@/config/resolve-env.js";
 import type { Config } from "@/config/schema.js";
@@ -290,6 +291,23 @@ export async function scanProject(opts: {
           const msg = err instanceof Error ? err.message : String(err);
           logger.warn({ err: msg }, "What's-new summary failed");
         }
+      }
+
+      // Step 6: insights panels (market + suggestions). Regenerated every
+      // scan so they stay in sync with peer activity and the user's commits.
+      try {
+        const { cost } = await generateInsights({
+          db,
+          provider,
+          scanId,
+          projectId: project.id,
+          projectSummary: inference.summary,
+        });
+        totalCost += cost;
+      } catch (err) {
+        partial = true;
+        const msg = err instanceof Error ? err.message : String(err);
+        logger.warn({ err: msg }, "Insights generation failed");
       }
     }
   } finally {

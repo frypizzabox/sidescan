@@ -137,7 +137,7 @@ function ProjectTabs({ base, slug }: { base: string; slug: string }) {
       {tab(`${base}/feed`, "Feed", feedUnread)}
       {tab(`${base}/project`, "Project", 0)}
       {tab(`${base}/competitors`, "Competitors", competitorsUnread)}
-      {tab(`${base}/insights`, "Insights", 0, false, true)}
+      {tab(`${base}/insights`, "Insights", 0)}
     </div>
   );
 }
@@ -151,15 +151,4 @@ function useCompetitorsUnreadCount(slug: string | undefined): number {
   );
 }
 
-export function InsightsTab() {
-  return (
-    <div className="py-12 text-center">
-      <div className="inline-flex items-center gap-1.5 text-[10px] font-semibold tracking-wider uppercase text-ink-4 mb-2">
-        V2 only
-      </div>
-      <p className="text-[14px] text-ink-3">
-        Cross-project comparisons, peer deltas.
-      </p>
-    </div>
-  );
-}
+export { InsightsTab } from "@/components/insights/InsightsTab";
