@@ -366,6 +366,60 @@ export function listDigestHighlights(
   }));
 }
 
+export interface SparklineBucket {
+  date: string; // YYYY-MM-DD
+  count: number;
+}
+
+/**
+ * Returns per-day counts of newly-discovered findings for a project over
+ * the last N days. Missing days are filled with zeroes so the client can
+ * render a contiguous sparkline without gap-handling. Dismissed findings
+ * are excluded.
+ */
+export function listFindingSparkline(
+  db: Db,
+  projectId: number,
+  days: number,
+): SparklineBucket[] {
+  const now = new Date();
+  const cutoff = new Date(now);
+  cutoff.setUTCDate(cutoff.getUTCDate() - (days - 1));
+  cutoff.setUTCHours(0, 0, 0, 0);
+
+  const rows = db
+    .prepare<
+      [number, string],
+      { day: string; c: number }
+    >(
+      `SELECT substr(f.created_at, 1, 10) AS day, COUNT(*) AS c
+       FROM finding f
+       JOIN scan s ON f.scan_id = s.id
+       JOIN repo r ON s.repo_id = r.id
+       WHERE r.project_id = ?
+         AND f.dismissed = 0
+         AND f.created_at >= ?
+       GROUP BY day`,
+    )
+    .all(projectId, cutoff.toISOString());
+
+  const byDay = new Map<string, number>();
+  for (const row of rows) byDay.set(row.day, row.c);
+
+  const out: SparklineBucket[] = [];
+  for (let offset = days - 1; offset >= 0; offset--) {
+    const d = new Date(now);
+    d.setUTCDate(d.getUTCDate() - offset);
+    const iso = isoDay(d);
+    out.push({ date: iso, count: byDay.get(iso) ?? 0 });
+  }
+  return out;
+}
+
+function isoDay(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
+
 /**
  * Returns the latest successful/partial scan id for a project.
  * Used to compute "new since last scan" counts and `since` cutoffs.

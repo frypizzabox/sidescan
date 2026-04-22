@@ -12,6 +12,7 @@ import {
   countNewFindingsBySource,
   countNewActivityByKind,
   listDigestHighlights,
+  listFindingSparkline,
   getLatestScanIdForProject,
   dismissFinding,
   markFindingRead,
@@ -363,6 +364,20 @@ export function buildApiRoutes(deps: ApiDeps): Hono {
       activityCounts: countNewActivityByKind(deps.db, project.id, latestScanId),
       highlights: listDigestHighlights(deps.db, project.id, latestScanId, 5),
     });
+  });
+
+  api.get("/projects/:slug/sparkline", (c) => {
+    const slug = c.req.param("slug");
+    const project = getProjectBySlug(deps.db, slug);
+    if (!project || project.hidden === 1) {
+      return c.json({ error: "project_not_found", slug }, 404);
+    }
+    const days = Math.min(
+      Math.max(parseInt(c.req.query("days") ?? "30", 10) || 30, 1),
+      90,
+    );
+    const buckets = listFindingSparkline(deps.db, project.id, days);
+    return c.json({ days, buckets });
   });
 
   api.get("/across", (c) => {
