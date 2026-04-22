@@ -1,48 +1,39 @@
 # Sidescan
 
-> Self-hostable competitive-intel server for solo devs. Point it at your GitHub repos (or local clones); it watches HN, Reddit, Lobsters, Dev.to, GitHub, and the web for nearby work.
+> Sidescan watches the world around your GitHub repos — HN, Reddit, Dev.to, competitors — and tells you what you might be missing.
 
-**Status:** V1 complete — scan, infer, surface findings, rank, dashboard.
+<!-- Replace with a dashboard screenshot once you have one you like: -->
+<!-- ![Sidescan dashboard](docs/screenshot.png) -->
 
-## What you get
+Self-hosted. Single Docker image. Zero telemetry. MIT.
 
-- A local service + SQLite DB + web dashboard
-- You configure projects (repos to monitor) in a single YAML file
-- On a schedule, each project's repo is analyzed, an LLM infers what it is, and search queries fan out to HN / Reddit / Lobsters / Dev.to / GitHub / Brave or Serper for nearby work
-- Findings accumulate across scans with dedup + relevance ranking
-- "What's new since last scan" digest, dismiss, timeline view, ⌘K palette
+## Why
 
-## Install shape
+You're a solo dev shipping a product. Somewhere on Hacker News this week, two teams you've never heard of are building something adjacent to yours. On Reddit, people are discussing a problem your project already solves. A competitor just tagged a release with a feature you don't have.
 
-One directory is your install. It holds:
+You can't scroll all of that. Sidescan does — on a schedule, for every project you point it at. It reads your repo to figure out what you're building, fans out to HN, Reddit, Lobsters, Dev.to, GitHub, and the web for anything near your space, and synthesizes the result into:
 
-```
-my-sidescan/
-├── config.yaml       # projects to watch (your edits)
-├── .env              # API keys (gitignored)
-└── data/
-    └── sidescan.db   # SQLite (gitignored)
-```
+- **A daily/weekly feed** of everything new, grouped by day
+- **A competitors view** of similar GitHub repos ranked by activity
+- **An Insights tab** with AI-written bullets telling you what peers shipped recently and specific next-step suggestions grounded in your own commit history
 
-Two ways to run it: Docker (recommended) or from source.
+## Quickstart (Docker)
 
-## Quickstart: Docker
-
-Prereqs: Docker + Docker Compose.
+Requires Docker + Docker Compose.
 
 ```bash
-git clone <this-repo> my-sidescan
+git clone https://github.com/frypizzabox/sidescan my-sidescan
 cd my-sidescan
 
-# 1. Seed config + env
+# 1. Config + API keys
 cp packages/server/src/config/example.yaml config.yaml
 cat > .env <<'EOF'
-ANTHROPIC_API_KEY=sk-ant-...   # your Claude key
-# BRAVE_API_KEY=...            # optional, enables web search
-# GITHUB_TOKEN=...              # optional, raises GitHub rate limits
+ANTHROPIC_API_KEY=sk-ant-...    # required
+GITHUB_TOKEN=ghp_...            # required for private repos; recommended for rate limits
+# BRAVE_API_KEY=...             # optional, enables web search
 EOF
 
-# 2. Edit config.yaml — add your projects (paths live under /repos/ in the container)
+# 2. Edit config.yaml to add your projects
 $EDITOR config.yaml
 
 # 3. Boot
@@ -50,69 +41,19 @@ docker compose up -d
 
 # 4. Open the dashboard
 open http://localhost:3000
+
+# 5. Trigger your first scan
+docker compose exec sidescan node packages/server/bin/sidescan scan <your-project-slug> --bootstrap
 ```
 
-The compose file mounts `~/Projects` on your host to `/repos` in the container so local-clone paths work; if you use only GitHub URLs, the mount isn't needed. Edit `docker-compose.yml` for your setup.
+An install is one directory holding `config.yaml`, `.env`, and `data/` (SQLite). Config is edited by hand; the web UI is view-only.
 
-### Running commands inside the container
-
-```bash
-# Trigger a scan immediately
-docker compose exec sidescan node packages/server/bin/sidescan scan <project-slug>
-
-# See project status
-docker compose exec sidescan node packages/server/bin/sidescan status
-
-# Reset a project's findings
-docker compose exec sidescan node packages/server/bin/sidescan reset <project-slug> -y
-```
-
-## Quickstart: from source (dev / tinkering)
-
-Prereqs: Node ≥ 20.
-
-```bash
-git clone <this-repo> my-sidescan
-cd my-sidescan
-npm install
-npm run build
-
-# Initialize config.yaml + .env + data/ in this directory
-node packages/server/bin/sidescan init
-
-# Fill in config.yaml and .env
-$EDITOR config.yaml
-$EDITOR .env        # put ANTHROPIC_API_KEY here
-
-# Start the server (foreground, API on :3000)
-node packages/server/bin/sidescan start
-
-# In a second terminal, the Vite dev server (UI on :5173, proxies /api):
-npm run dev:web
-```
-
-The Vite dev server has the nicer experience (HMR). Once built, the server at :3000 also serves the dashboard from `packages/web/dist/`.
-
-## CLI commands
-
-```
-sidescan init                         # create config.yaml + .env + data/ in CWD
-sidescan start [--watch-config]       # boot server + scheduler (foreground)
-sidescan status                       # running state + project summary
-sidescan reload                       # re-read config.yaml on a running server
-sidescan scan [project-slug] [--all]  # scan one, all auto-scan, or --all (incl. manual)
-sidescan reset <project-slug> [-y]    # hard-delete scan history for a project
-sidescan version
-```
-
-## Config
-
-See `packages/server/src/config/example.yaml` for the full shape. Highlights:
+## Config shape
 
 ```yaml
 providers:
-  ai: claude            # claude | openai | ollama
-  search: brave         # brave | serper | null
+  ai: claude              # claude | openai | ollama
+  search: brave           # brave | serper | null
 
 projects:
   - name: My Project
@@ -123,40 +64,46 @@ projects:
       time: "09:00"
     repos:
       - path: https://github.com/owner/repo
-        # branch: develop   # optional; defaults to the repo's default branch
-
-      # Or point at a local clone:
-      # - path: /Users/you/Projects/web/my-project
+      # Or a local clone:
+      # - path: /Users/you/Projects/my-project
 ```
 
-`path` accepts either a GitHub URL (`https://github.com/owner/repo` or `git@github.com:owner/repo.git`) or an absolute filesystem path. GitHub URLs are fetched via the GitHub API — set `GITHUB_TOKEN` in `.env` or rate limits will bite you fast.
+Full example: [`packages/server/src/config/example.yaml`](packages/server/src/config/example.yaml).
 
-## Env keys (in `.env`)
+## Running from source (for contributors)
 
+Requires Node ≥ 20.
+
+```bash
+git clone https://github.com/frypizzabox/sidescan my-sidescan
+cd my-sidescan
+npm install
+npm run build
+node packages/server/bin/sidescan init
+# edit config.yaml + .env
+node packages/server/bin/sidescan start
+# In a second terminal for HMR dev UI:
+npm run dev:web
 ```
-ANTHROPIC_API_KEY=sk-ant-...     # required if providers.ai = claude
-OPENAI_API_KEY=sk-...            # required if providers.ai = openai
-# (nothing for ollama; set OLLAMA_HOST if non-default)
 
-BRAVE_API_KEY=...                # if providers.search = brave
-SERPER_API_KEY=...               # if providers.search = serper
+CLI surface: `init`, `start`, `status`, `reload`, `scan [--all] [--bootstrap]`, `reset`, `version`.
 
-GITHUB_TOKEN=ghp_...             # optional for search sources; effectively required
-                                 # if any repo is a GitHub URL (unauth = 60 req/hr)
-```
+## Costs
 
-Keys never live in `config.yaml`. `config.yaml` is safe to commit to a dotfiles repo; `.env` stays on the host.
+A scan makes ~3–4 AI calls (repo inference, ranker, what's-new digest, insights) plus source requests.
 
-## Costs (rough)
-
-Each scan makes 2-3 AI calls (repo inference, rank findings, what's-new summary) plus external source requests.
-
-- Claude Sonnet 4.6: ~$0.01 - $0.03 per scan
+- Claude Sonnet 4.6: ~$0.03–0.08 per scan
 - HN / Reddit / Lobsters / Dev.to / GitHub (unauth): free
-- Brave free tier: 1 req/sec, 2k/month
-- Serper: pay-per-search
+- Brave free tier: 1 req/sec, 2k/month · Serper: pay-per-search
 
-A daily scan across ~5 projects is roughly $2-5/month in AI costs.
+A weekly scan across 5 projects is roughly $2–5/month.
+
+## Principles
+
+- **Your data stays on your box.** Zero telemetry. The binary never phones home.
+- **Config is the source of truth.** Edit `config.yaml` by hand. The UI shows findings; it does not mutate config.
+- **BYO keys.** All API keys come from env vars — never `config.yaml` — so the config file is safe to commit to a dotfiles repo.
+- **Cumulative, not destructive.** Findings accumulate across scans with `first_seen` / `last_seen` timestamps. `sidescan reset` is the only path to wipe.
 
 ## License
 
