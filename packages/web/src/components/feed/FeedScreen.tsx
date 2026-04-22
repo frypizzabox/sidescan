@@ -107,7 +107,7 @@ export function FeedScreen() {
 
   if (isLoading) {
     return (
-      <div className="text-zinc-500 text-sm py-12 text-center">
+      <div className="text-ink-3 text-sm py-12 text-center">
         Loading feed…
       </div>
     );
@@ -137,7 +137,7 @@ export function FeedScreen() {
       />
 
       {filtered.length === 0 ? (
-        <div className="py-16 text-center text-[13px] text-zinc-400">
+        <div className="py-16 text-center text-[13px] text-ink-4">
           {entries.length === 0
             ? "No activity yet. Run a scan to populate this feed."
             : "Nothing matches these filters."}
@@ -147,14 +147,14 @@ export function FeedScreen() {
           {grouped.map((g) => (
             <section
               key={g.key}
-              className="rounded-md ring-1 ring-inset ring-zinc-200 bg-white overflow-hidden"
+              className="rounded-md ring-1 ring-inset ring-hairline bg-surface-raised overflow-hidden"
             >
               {g.label && sort === "newest" && (
-                <header className="px-4 py-2 bg-zinc-50/60 border-b border-zinc-100 flex items-baseline gap-1.5">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+                <header className="px-4 py-2 bg-surface/60 border-b border-hairline flex items-baseline gap-1.5">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">
                     {g.label}
                   </span>
-                  <span className="text-[11px] text-zinc-400 tabular-nums">
+                  <span className="text-[11px] text-ink-4 tabular-nums">
                     · {g.items.length}
                   </span>
                 </header>

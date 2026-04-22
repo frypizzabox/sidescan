@@ -7,7 +7,7 @@ export function ScanDetail() {
   const { data, isLoading, isError } = useScanDetail(slug, id);
 
   if (isLoading) {
-    return <div className="px-8 py-10 text-zinc-500">Loading…</div>;
+    return <div className="px-8 py-10 text-ink-3">Loading…</div>;
   }
   if (isError || !data) {
     return (
@@ -23,12 +23,12 @@ export function ScanDetail() {
     <div className="max-w-4xl mx-auto px-8 py-10">
       <Link
         to={`/projects/${slug}`}
-        className="text-xs text-zinc-500 hover:text-zinc-800"
+        className="text-xs text-ink-3 hover:text-ink-1"
       >
         ← {slug}
       </Link>
       <h1 className="text-2xl font-semibold mt-2 mb-1">Scan #{scan.id}</h1>
-      <p className="text-xs text-zinc-500 mb-6">
+      <p className="text-xs text-ink-3 mb-6">
         {scan.status} · {formatDate(scan.startedAt)}
         {scan.aiProvider && <> · {scan.aiProvider}</>}
         {scan.isBootstrap && <> · bootstrap</>}
@@ -48,23 +48,23 @@ export function ScanDetail() {
 
       <Section title={`Findings (${findings.length})`}>
         {findings.length === 0 ? (
-          <p className="text-zinc-500 text-sm">None this scan.</p>
+          <p className="text-ink-3 text-sm">None this scan.</p>
         ) : (
           <ul className="space-y-2">
             {findings.map((f) => (
               <li
                 key={f.id}
-                className="rounded border border-zinc-200 p-2 text-sm"
+                className="rounded border border-hairline p-2 text-sm"
               >
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-[10px] uppercase tracking-wide text-zinc-500">
+                  <span className="text-[10px] uppercase tracking-wide text-ink-3">
                     {f.source}
                   </span>
                   <a
                     href={f.url}
                     target="_blank"
                     rel="noreferrer noopener"
-                    className="font-medium text-zinc-900 hover:underline break-words"
+                    className="font-medium text-ink-1 hover:underline break-words"
                   >
                     {f.title}
                   </a>
@@ -74,18 +74,18 @@ export function ScanDetail() {
                     </span>
                   )}
                   {f.dismissed === 1 && (
-                    <span className="text-[10px] uppercase tracking-wide text-zinc-400">
+                    <span className="text-[10px] uppercase tracking-wide text-ink-4">
                       dismissed
                     </span>
                   )}
                   {f.relevance_score != null && (
-                    <span className="text-[11px] text-zinc-500">
+                    <span className="text-[11px] text-ink-3">
                       rel {(f.relevance_score * 100).toFixed(0)}%
                     </span>
                   )}
                 </div>
                 {f.snippet && (
-                  <p className="text-xs text-zinc-600 mt-1 line-clamp-2">
+                  <p className="text-xs text-ink-2 mt-1 line-clamp-2">
                     {f.snippet}
                   </p>
                 )}
@@ -97,24 +97,24 @@ export function ScanDetail() {
 
       <Section title={`Repo activity (${activity.length})`}>
         {activity.length === 0 ? (
-          <p className="text-zinc-500 text-sm">None this scan.</p>
+          <p className="text-ink-3 text-sm">None this scan.</p>
         ) : (
           <ul className="space-y-2">
             {activity.map((a) => (
               <li
                 key={a.id}
-                className="rounded border border-zinc-200 p-2 text-sm"
+                className="rounded border border-hairline p-2 text-sm"
               >
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-[10px] uppercase tracking-wide text-zinc-500">
+                  <span className="text-[10px] uppercase tracking-wide text-ink-3">
                     {a.kind}
                   </span>
-                  <code className="text-[11px] bg-zinc-100 px-1 rounded">
+                  <code className="text-[11px] bg-surface-sunk px-1 rounded">
                     {a.ref.slice(0, 8)}
                   </code>
-                  <span className="text-zinc-800 break-words">{a.title}</span>
+                  <span className="text-ink-1 break-words">{a.title}</span>
                 </div>
-                <div className="text-[11px] text-zinc-500 mt-1">
+                <div className="text-[11px] text-ink-3 mt-1">
                   {formatDate(a.event_date)}
                 </div>
               </li>
@@ -135,7 +135,7 @@ function Section({
 }) {
   return (
     <section className="mb-6">
-      <h2 className="text-sm font-semibold text-zinc-800 mb-2">{title}</h2>
+      <h2 className="text-sm font-semibold text-ink-1 mb-2">{title}</h2>
       {children}
     </section>
   );

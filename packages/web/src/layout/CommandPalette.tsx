@@ -33,19 +33,19 @@ export function CommandPalette() {
       onClick={() => setOpen(false)}
     >
       <div
-        className="w-full max-w-lg rounded-lg border border-zinc-200 bg-white shadow-xl overflow-hidden"
+        className="w-full max-w-lg rounded-lg border border-hairline bg-surface-raised shadow-xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <Command label="Command palette">
-          <div className="border-b border-zinc-200">
+          <div className="border-b border-hairline">
             <Command.Input
               placeholder="Jump to a project or view…"
-              className="w-full px-4 py-3 text-sm outline-none placeholder:text-zinc-400"
+              className="w-full px-4 py-3 text-sm outline-none placeholder:text-ink-4"
               autoFocus
             />
           </div>
           <Command.List className="max-h-80 overflow-y-auto p-1">
-            <Command.Empty className="px-3 py-4 text-sm text-zinc-500">
+            <Command.Empty className="px-3 py-4 text-sm text-ink-3">
               No results.
             </Command.Empty>
 
@@ -75,7 +75,7 @@ export function CommandPalette() {
               </Command.Group>
             )}
           </Command.List>
-          <div className="border-t border-zinc-200 px-3 py-2 text-[11px] text-zinc-500 flex gap-3">
+          <div className="border-t border-hairline px-3 py-2 text-[11px] text-ink-3 flex gap-3">
             <span>↑↓ navigate</span>
             <span>↵ select</span>
             <span>esc close</span>
@@ -95,7 +95,7 @@ function PaletteItem(props: {
     <Command.Item
       value={props.value}
       onSelect={props.onSelect}
-      className="flex items-center px-3 py-2 text-sm rounded cursor-pointer text-zinc-800 data-[selected=true]:bg-zinc-100"
+      className="flex items-center px-3 py-2 text-sm rounded cursor-pointer text-ink-1 data-[selected=true]:bg-surface-sunk"
     >
       {props.children}
     </Command.Item>

@@ -16,7 +16,7 @@ export function ProjectTab() {
 
   if (isLoading) {
     return (
-      <div className="py-12 text-center text-sm text-zinc-500">Loading…</div>
+      <div className="py-12 text-center text-sm text-ink-3">Loading…</div>
     );
   }
   if (isError || !data) {
@@ -43,15 +43,15 @@ export function ProjectTab() {
 
       <Section title="Recent scans" count={scans.length}>
         {scans.length === 0 ? (
-          <p className="text-[13px] text-zinc-500">
+          <p className="text-[13px] text-ink-3">
             No scans yet. Run{" "}
-            <code className="px-1 rounded bg-zinc-100 font-mono text-[12px]">
+            <code className="px-1 rounded bg-surface-sunk font-mono text-[12px]">
               sidescan scan {project.slug}
             </code>
             .
           </p>
         ) : (
-          <div className="space-y-0 rounded-md ring-1 ring-inset ring-zinc-200 overflow-hidden">
+          <div className="space-y-0 rounded-md ring-1 ring-inset ring-hairline overflow-hidden">
             {scans.map((s) => (
               <ScanRow key={s.id} slug={project.slug} scan={s} />
             ))}
@@ -81,13 +81,13 @@ function ActivityTrend({ slug }: { slug: string }) {
   const total = data.buckets.reduce((sum, b) => sum + b.count, 0);
 
   return (
-    <section className="rounded-md ring-1 ring-inset ring-zinc-200 bg-white px-3 py-2.5 flex items-center gap-4">
+    <section className="rounded-md ring-1 ring-inset ring-hairline bg-surface-raised px-3 py-2.5 flex items-center gap-4">
       <div>
-        <h2 className="text-[11px] font-bold tracking-wider uppercase text-zinc-500">
+        <h2 className="text-[11px] font-bold tracking-wider uppercase text-ink-3">
           Activity trend
         </h2>
-        <p className="text-[12px] text-zinc-500">
-          <span className="text-zinc-800 font-medium tabular-nums">{total}</span>{" "}
+        <p className="text-[12px] text-ink-3">
+          <span className="text-ink-1 font-medium tabular-nums">{total}</span>{" "}
           finding{total === 1 ? "" : "s"} over the last {data.days} days
         </p>
       </div>
@@ -110,11 +110,11 @@ function Section({
   return (
     <section>
       <div className="flex items-center gap-2 mb-2">
-        <h2 className="text-[11px] font-bold tracking-wider uppercase text-zinc-500">
+        <h2 className="text-[11px] font-bold tracking-wider uppercase text-ink-3">
           {title}
         </h2>
         {count != null && (
-          <span className="text-[11px] text-zinc-400 tabular-nums">· {count}</span>
+          <span className="text-[11px] text-ink-4 tabular-nums">· {count}</span>
         )}
       </div>
       {children}
@@ -125,8 +125,8 @@ function Section({
 function DtDd({ label, value }: { label: string; value: string }) {
   return (
     <>
-      <dt className="text-zinc-500">{label}</dt>
-      <dd className="text-zinc-800 font-medium">{value}</dd>
+      <dt className="text-ink-3">{label}</dt>
+      <dd className="text-ink-1 font-medium">{value}</dd>
     </>
   );
 }
@@ -137,13 +137,13 @@ function RepoCard({ repo }: { repo: Repo }) {
   const isGithub = repo.githubKey != null;
 
   return (
-    <div className="rounded-md ring-1 ring-inset ring-zinc-200 bg-white p-3">
+    <div className="rounded-md ring-1 ring-inset ring-hairline bg-surface-raised p-3">
       <div className="flex items-start gap-3">
         {isGithub && owner ? (
           <RepoAvatar seed={repo.githubKey!} owner={owner} size={40} />
         ) : (
-          <div className="w-10 h-10 shrink-0 rounded-md bg-zinc-100 ring-1 ring-inset ring-zinc-200 flex items-center justify-center">
-            <span className="text-[10px] font-bold tracking-wider uppercase text-zinc-500">
+          <div className="w-10 h-10 shrink-0 rounded-md bg-surface-sunk ring-1 ring-inset ring-hairline flex items-center justify-center">
+            <span className="text-[10px] font-bold tracking-wider uppercase text-ink-3">
               local
             </span>
           </div>
@@ -155,31 +155,31 @@ function RepoCard({ repo }: { repo: Repo }) {
                 href={repo.path}
                 target="_blank"
                 rel="noreferrer noopener"
-                className="text-[15px] leading-[20px] font-semibold text-zinc-900 hover:text-zinc-700 tracking-[-0.005em] break-words"
+                className="text-[15px] leading-[20px] font-semibold text-ink-1 hover:text-ink-2 tracking-[-0.005em] break-words"
               >
-                <span className="text-zinc-500 font-medium">{owner}/</span>
+                <span className="text-ink-3 font-medium">{owner}/</span>
                 <span>{name}</span>
-                <Icon.Ext className="inline-block w-3 h-3 ml-1 text-zinc-300 align-[-1px]" />
+                <Icon.Ext className="inline-block w-3 h-3 ml-1 text-ink-4 align-[-1px]" />
               </a>
             ) : (
-              <span className="text-[15px] leading-[20px] font-semibold text-zinc-900 break-all">
+              <span className="text-[15px] leading-[20px] font-semibold text-ink-1 break-all">
                 {repo.path}
               </span>
             )}
             {repo.branch && (
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium leading-[14px] ring-1 ring-inset text-zinc-600 bg-zinc-50 ring-zinc-200 font-mono">
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium leading-[14px] ring-1 ring-inset text-ink-2 bg-surface ring-hairline font-mono">
                 {repo.branch}
               </span>
             )}
           </div>
-          <div className="mt-1.5 flex items-center gap-3 text-[12px] text-zinc-500 flex-wrap">
+          <div className="mt-1.5 flex items-center gap-3 text-[12px] text-ink-3 flex-wrap">
             <span className="inline-flex items-center gap-1 tabular-nums">
-              <Icon.Commit className="w-3.5 h-3.5 text-zinc-400" />
+              <Icon.Commit className="w-3.5 h-3.5 text-ink-4" />
               {repo.commitCount} commit{repo.commitCount === 1 ? "" : "s"} tracked
             </span>
             {repo.lastScannedAt && (
               <>
-                <span className="text-zinc-400">·</span>
+                <span className="text-ink-4">·</span>
                 <span title={absoluteTime(repo.lastScannedAt)}>
                   last scanned {relativeTime(repo.lastScannedAt)}
                 </span>
@@ -200,33 +200,33 @@ function ScanRow({ slug, scan }: { slug: string; scan: ScanSummary }) {
         ? "text-amber-700 bg-amber-50 ring-amber-200"
         : scan.status === "failed"
           ? "text-red-700 bg-red-50 ring-red-200"
-          : "text-zinc-700 bg-zinc-100 ring-zinc-200";
+          : "text-ink-2 bg-surface-sunk ring-hairline";
 
   return (
     <Link
       to={`/projects/${slug}/scans/${scan.id}`}
-      className="flex items-center gap-3 px-3 py-2.5 border-b last:border-b-0 border-zinc-100 hover:bg-zinc-50/70"
+      className="flex items-center gap-3 px-3 py-2.5 border-b last:border-b-0 border-hairline hover:bg-surface/70"
     >
       <span
         className={`shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold tracking-wide uppercase ring-1 ring-inset ${statusClass}`}
       >
         {scan.status}
       </span>
-      <span className="text-[13px] text-zinc-800 font-medium tabular-nums">
+      <span className="text-[13px] text-ink-1 font-medium tabular-nums">
         #{scan.id}
       </span>
       {scan.isBootstrap && (
-        <span className="text-[10px] uppercase tracking-wider text-zinc-400">
+        <span className="text-[10px] uppercase tracking-wider text-ink-4">
           bootstrap
         </span>
       )}
-      <span className="text-[12px] text-zinc-500 flex-1 truncate">
+      <span className="text-[12px] text-ink-3 flex-1 truncate">
         {scan.newFindings} new finding{scan.newFindings === 1 ? "" : "s"}
         {scan.costEstimateUSD != null && scan.costEstimateUSD > 0 && (
           <> · ${scan.costEstimateUSD.toFixed(4)}</>
         )}
       </span>
-      <time className="shrink-0 text-[11px] text-zinc-400 tabular-nums">
+      <time className="shrink-0 text-[11px] text-ink-4 tabular-nums">
         {relativeTime(scan.startedAt)}
       </time>
     </Link>

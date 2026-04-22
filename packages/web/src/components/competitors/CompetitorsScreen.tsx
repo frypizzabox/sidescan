@@ -72,7 +72,7 @@ export function CompetitorsScreen() {
 
   if (isLoading) {
     return (
-      <div className="py-12 text-center text-sm text-zinc-500">
+      <div className="py-12 text-center text-sm text-ink-3">
         Loading competitors…
       </div>
     );
@@ -87,9 +87,9 @@ export function CompetitorsScreen() {
 
   return (
     <div className="space-y-3">
-      <div className="text-[13px] text-zinc-500 leading-[18px] text-pretty">
+      <div className="text-[13px] text-ink-3 leading-[18px] text-pretty">
         Public GitHub repos that overlap with{" "}
-        <strong className="text-zinc-700 font-medium">
+        <strong className="text-ink-2 font-medium">
           {project?.project.name ?? "this project"}
         </strong>{" "}
         by topic, language, and description. Sidescan uses two signals: an
@@ -107,7 +107,7 @@ export function CompetitorsScreen() {
       />
 
       {visible.length === 0 ? (
-        <div className="py-16 text-center text-[13px] text-zinc-400">
+        <div className="py-16 text-center text-[13px] text-ink-4">
           {repos.length === 0
             ? "No similar GitHub repos surfaced yet."
             : "No repos match these filters."}
@@ -144,22 +144,22 @@ export function CompetitorsScreen() {
 
       {dismissedRepos.length > 0 && (
         <details className="pt-2">
-          <summary className="cursor-pointer text-[12px] text-zinc-400 hover:text-zinc-700 select-none">
+          <summary className="cursor-pointer text-[12px] text-ink-4 hover:text-ink-2 select-none">
             {dismissedRepos.length} dismissed
           </summary>
           <div className="mt-2 space-y-2">
             {dismissedRepos.map((repo) => (
               <div
                 key={repo.id}
-                className="rounded-md bg-zinc-50 ring-1 ring-inset ring-zinc-200 p-3 flex items-center gap-3"
+                className="rounded-md bg-surface ring-1 ring-inset ring-hairline p-3 flex items-center gap-3"
               >
-                <span className="text-[13px] text-zinc-400 truncate flex-1">
+                <span className="text-[13px] text-ink-4 truncate flex-1">
                   {repo.fullName} · dismissed
                 </span>
                 <button
                   type="button"
                   onClick={() => toggleDismiss(repo.id, false)}
-                  className="text-[12px] text-zinc-500 hover:text-zinc-900"
+                  className="text-[12px] text-ink-3 hover:text-ink-1"
                 >
                   Undo
                 </button>

@@ -27,9 +27,9 @@ export function FeedFinding({
   const pad = density === "compact" ? "py-3" : "py-4";
   const titleSize = density === "compact" ? "text-[14px]" : "text-[15px]";
   const titleWeight = unread
-    ? "font-semibold text-zinc-900"
-    : "font-medium text-zinc-500";
-  const snippetColor = unread ? "text-zinc-600" : "text-zinc-400";
+    ? "font-semibold text-ink-1"
+    : "font-medium text-ink-3";
+  const snippetColor = unread ? "text-ink-2" : "text-ink-4";
 
   const railClass =
     readStyle === "rail" && unread
@@ -46,7 +46,7 @@ export function FeedFinding({
       target="_blank"
       rel="noreferrer noopener"
       onClick={onOpen}
-      className={`group relative flex gap-3 px-4 ${pad} ${railClass} border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50/70 transition-colors cursor-pointer`}
+      className={`group relative flex gap-3 px-4 ${pad} ${railClass} border-b border-hairline last:border-b-0 hover:bg-surface/70 transition-colors cursor-pointer`}
     >
       {readStyle === "dot" && (
         <span
@@ -65,7 +65,7 @@ export function FeedFinding({
             className={`${titleSize} ${titleWeight} leading-[20px] tracking-[-0.005em] min-w-0 flex-1`}
           >
             {finding.title}
-            <Icon.Ext className="inline-block w-3 h-3 ml-1 text-zinc-300 group-hover:text-zinc-400 align-[-1px]" />
+            <Icon.Ext className="inline-block w-3 h-3 ml-1 text-ink-4 group-hover:text-ink-4 align-[-1px]" />
           </h3>
           {finding.isNew && unread && <NewBadge />}
           <MatchPill
@@ -81,27 +81,27 @@ export function FeedFinding({
             {finding.snippet}
           </p>
         )}
-        <div className="mt-1.5 flex items-center gap-2 text-[12px] text-zinc-500 flex-wrap">
+        <div className="mt-1.5 flex items-center gap-2 text-[12px] text-ink-3 flex-wrap">
           <span
             className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold tracking-wide uppercase ring-1 ring-inset ${TONE_CLASSES[meta.tone]}`}
           >
             {meta.short}
           </span>
-          <span className="text-zinc-400">·</span>
+          <span className="text-ink-4">·</span>
           <span className="truncate max-w-[180px]">{domain}</span>
           {finding.points != null && (
             <>
-              <span className="text-zinc-400">·</span>
+              <span className="text-ink-4">·</span>
               <span>▲ {finding.points}</span>
             </>
           )}
           {finding.comments != null && (
             <>
-              <span className="text-zinc-400">·</span>
+              <span className="text-ink-4">·</span>
               <span>{finding.comments} comments</span>
             </>
           )}
-          <span className="text-zinc-400">·</span>
+          <span className="text-ink-4">·</span>
           <time
             title={absoluteTime(finding.eventDate)}
             className="tabular-nums"

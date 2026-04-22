@@ -24,7 +24,7 @@ export function Sparkline({
       {buckets.map((b) => {
         const heightPct =
           max === 0 ? 0 : Math.max(8, Math.round((b.count / max) * 100));
-        const tone = b.count === 0 ? "bg-zinc-200" : "bg-emerald-400";
+        const tone = b.count === 0 ? "bg-hairline" : "bg-emerald-400";
         return (
           <span
             key={b.date}

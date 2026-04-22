@@ -4,7 +4,7 @@ import { CommandPalette } from "@/layout/CommandPalette";
 
 export function Layout() {
   return (
-    <div className="min-h-screen flex bg-white text-zinc-900">
+    <div className="min-h-screen flex bg-canvas text-ink-1">
       <Sidebar />
       <main className="flex-1">
         <Outlet />

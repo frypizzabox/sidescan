@@ -32,7 +32,7 @@ export function CompetitorCard({
 
   return (
     <div
-      className={`group relative rounded-md bg-white ring-1 ring-inset ring-zinc-200 ${pad} hover:ring-zinc-300 transition-shadow`}
+      className={`group relative rounded-md bg-surface-raised ring-1 ring-inset ring-hairline ${pad} hover:ring-hairline-strong transition-shadow`}
       style={
         rail ? { boxShadow: "inset 3px 0 0 0 var(--color-new-rail)" } : undefined
       }
@@ -50,11 +50,11 @@ export function CompetitorCard({
               target="_blank"
               rel="noreferrer noopener"
               onClick={onOpen}
-              className="min-w-0 flex-1 text-[15px] leading-[20px] font-semibold text-zinc-900 hover:text-zinc-700 tracking-[-0.005em] break-words"
+              className="min-w-0 flex-1 text-[15px] leading-[20px] font-semibold text-ink-1 hover:text-ink-2 tracking-[-0.005em] break-words"
             >
-              <span className="text-zinc-500 font-medium">{repo.owner}/</span>
+              <span className="text-ink-3 font-medium">{repo.owner}/</span>
               <span>{repo.name}</span>
-              <Icon.Ext className="inline-block w-3 h-3 ml-1 text-zinc-300 align-[-1px]" />
+              <Icon.Ext className="inline-block w-3 h-3 ml-1 text-ink-4 align-[-1px]" />
             </a>
             {repo.isNew && unread && <NewBadge />}
             <div className="flex items-center gap-1 shrink-0">
@@ -66,23 +66,23 @@ export function CompetitorCard({
               {showKeywordScore && repo.similarityScore != null && (
                 <span
                   title={`Keyword match ${Math.round(repo.similarityScore * 100)}%`}
-                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium leading-[14px] ring-1 ring-inset text-zinc-600 bg-zinc-50 ring-zinc-200 tabular-nums"
+                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium leading-[14px] ring-1 ring-inset text-ink-2 bg-surface ring-hairline tabular-nums"
                 >
-                  <span className="w-1 h-1 rounded-full bg-zinc-400" />
+                  <span className="w-1 h-1 rounded-full bg-ink-4" />
                   kw {Math.round(repo.similarityScore * 100)}
                 </span>
               )}
             </div>
           </div>
           {repo.description && (
-            <p className="mt-1 text-[13px] leading-[18px] text-zinc-600 line-clamp-2">
+            <p className="mt-1 text-[13px] leading-[18px] text-ink-2 line-clamp-2">
               {repo.description}
             </p>
           )}
-          <div className="mt-2 flex items-center gap-3 text-[12px] text-zinc-500 flex-wrap">
+          <div className="mt-2 flex items-center gap-3 text-[12px] text-ink-3 flex-wrap">
             {repo.stars != null && (
               <span className="inline-flex items-center gap-1 tabular-nums">
-                <Icon.Star className="w-3 h-3 text-zinc-400" />
+                <Icon.Star className="w-3 h-3 text-ink-4" />
                 {repo.stars.toLocaleString()}
               </span>
             )}
@@ -98,7 +98,7 @@ export function CompetitorCard({
             {repo.lastPushedAt && (
               <>
                 {(repo.stars != null || repo.language) && (
-                  <span className="text-zinc-400">·</span>
+                  <span className="text-ink-4">·</span>
                 )}
                 <span title={absoluteTime(repo.lastPushedAt)}>
                   pushed {relativeTime(repo.lastPushedAt)}
@@ -114,7 +114,7 @@ export function CompetitorCard({
             onDismiss();
           }}
           title="Dismiss"
-          className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0 w-6 h-6 -mr-1 -mt-1 rounded flex items-center justify-center text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100"
+          className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0 w-6 h-6 -mr-1 -mt-1 rounded flex items-center justify-center text-ink-4 hover:text-ink-2 hover:bg-surface-sunk"
         >
           <Icon.Dismiss className="w-3 h-3" />
         </button>

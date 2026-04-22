@@ -52,7 +52,7 @@ export function FeedRepoEvent({
         if (!activity.url) e.preventDefault();
         onOpen();
       }}
-      className={`group relative flex items-center gap-3 px-4 ${pad} ${railClass} border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50/70 ${activity.url ? "cursor-pointer" : "cursor-default"}`}
+      className={`group relative flex items-center gap-3 px-4 ${pad} ${railClass} border-b border-hairline last:border-b-0 hover:bg-surface/70 ${activity.url ? "cursor-pointer" : "cursor-default"}`}
     >
       {readStyle === "dot" && (
         <span
@@ -65,16 +65,16 @@ export function FeedRepoEvent({
         {icon}
         {activity.kind}
       </span>
-      <code className="shrink-0 text-[11px] font-mono text-zinc-400 tabular-nums">
+      <code className="shrink-0 text-[11px] font-mono text-ink-4 tabular-nums">
         {activity.ref.slice(0, 8)}
       </code>
       <span
-        className={`flex-1 min-w-0 truncate text-[13px] leading-[18px] ${unread ? "text-zinc-800 font-medium" : "text-zinc-400"}`}
+        className={`flex-1 min-w-0 truncate text-[13px] leading-[18px] ${unread ? "text-ink-1 font-medium" : "text-ink-4"}`}
       >
         {activity.title}
       </span>
       {activity.isNew && unread && <NewBadge />}
-      <time className="shrink-0 text-[12px] text-zinc-400 tabular-nums">
+      <time className="shrink-0 text-[12px] text-ink-4 tabular-nums">
         {relativeTime(activity.event_date)}
       </time>
     </a>

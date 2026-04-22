@@ -24,17 +24,17 @@ export function DigestBanner() {
     .sort((a, b) => b[1] - a[1]);
 
   return (
-    <div className="rounded-lg ring-1 ring-inset ring-emerald-200 bg-gradient-to-br from-emerald-50/60 to-white overflow-hidden">
+    <div className="rounded-lg ring-1 ring-inset ring-emerald-200 bg-gradient-to-br from-emerald-50/60 to-surface-raised dark:ring-emerald-500/30 dark:from-emerald-500/10 dark:to-surface-raised overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-emerald-50/40 transition-colors"
+        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-emerald-50/40 dark:hover:bg-emerald-500/5 transition-colors"
       >
-        <span className="inline-flex items-center gap-1.5 text-[10px] font-bold tracking-wider uppercase text-emerald-700">
+        <span className="inline-flex items-center gap-1.5 text-[10px] font-bold tracking-wider uppercase text-emerald-700 dark:text-emerald-300">
           <Icon.Sparkle className="w-3.5 h-3.5" />
           Digest
         </span>
-        <span className="text-[13px] text-zinc-500">
+        <span className="text-[13px] text-ink-3">
           {data.scanId != null && (
             <>
               Scan #{data.scanId}
@@ -44,7 +44,7 @@ export function DigestBanner() {
           )}
           {data.newCount} new finding{data.newCount === 1 ? "" : "s"}
         </span>
-        <span className="ml-auto text-zinc-400">
+        <span className="ml-auto text-ink-4">
           <Icon.Chevron
             className={`w-3 h-3 transition-transform ${open ? "rotate-90" : ""}`}
           />
@@ -61,7 +61,7 @@ export function DigestBanner() {
           )}
 
           {data.content && (
-            <p className="text-[14px] leading-[22px] text-zinc-700 text-pretty">
+            <p className="text-[14px] leading-[22px] text-ink-2 text-pretty">
               {data.content}
             </p>
           )}
@@ -75,19 +75,19 @@ export function DigestBanner() {
           )}
 
           {activityItems.length > 0 && (
-            <p className="text-[12px] text-zinc-500">
+            <p className="text-[12px] text-ink-3">
               Also this scan:{" "}
               {activityItems.map((txt, i) => (
                 <span key={txt}>
                   {i > 0 && ", "}
-                  <span className="text-zinc-700 font-medium">{txt}</span>
+                  <span className="text-ink-2 font-medium">{txt}</span>
                 </span>
               ))}
             </p>
           )}
 
           {data.scanId != null && (
-            <p className="text-[11px] text-zinc-500">
+            <p className="text-[11px] text-ink-3">
               <Link
                 to={`/projects/${slug}/scans/${data.scanId}`}
                 className="hover:underline"
@@ -128,12 +128,12 @@ function HighlightChip({ highlight }: { highlight: DigestHighlight }) {
       href={highlight.url}
       target="_blank"
       rel="noreferrer noopener"
-      className="group max-w-[280px] rounded-md ring-1 ring-inset ring-zinc-200 bg-white hover:ring-emerald-300 hover:bg-emerald-50/30 px-2 py-1.5 transition-colors"
+      className="group max-w-[280px] rounded-md ring-1 ring-inset ring-hairline bg-surface-raised hover:ring-emerald-300 hover:bg-emerald-50/30 dark:hover:ring-emerald-500/40 dark:hover:bg-emerald-500/5 px-2 py-1.5 transition-colors"
     >
-      <div className="text-[10px] font-semibold tracking-wider uppercase text-emerald-700">
+      <div className="text-[10px] font-semibold tracking-wider uppercase text-emerald-700 dark:text-emerald-300">
         {highlight.label}
       </div>
-      <div className="text-[12px] leading-[16px] text-zinc-800 line-clamp-2 group-hover:text-zinc-900">
+      <div className="text-[12px] leading-[16px] text-ink-1 line-clamp-2 group-hover:text-ink-1">
         {highlight.title}
       </div>
     </a>

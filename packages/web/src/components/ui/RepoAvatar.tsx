@@ -30,7 +30,7 @@ export function RepoAvatar({
         height={size}
         loading="lazy"
         onError={() => setImgError(true)}
-        className="shrink-0 rounded-md bg-zinc-100 ring-1 ring-inset ring-zinc-200 object-cover"
+        className="shrink-0 rounded-md bg-surface-sunk ring-1 ring-inset ring-hairline object-cover"
         style={{ width: size, height: size }}
       />
     );

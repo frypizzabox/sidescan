@@ -9,7 +9,7 @@ export function ProjectDetail() {
   const { data, isLoading, isError } = useProject(slug);
 
   if (isLoading) {
-    return <div className="px-8 py-10 text-zinc-500 text-sm">Loading…</div>;
+    return <div className="px-8 py-10 text-ink-3 text-sm">Loading…</div>;
   }
   if (isError || !data) {
     return (
@@ -25,15 +25,15 @@ export function ProjectDetail() {
   return (
     <div className="max-w-5xl mx-auto px-8 py-10">
       <div className="mb-4">
-        <h1 className="text-[22px] font-semibold text-zinc-900 tracking-[-0.01em]">
+        <h1 className="text-[22px] font-semibold text-ink-1 tracking-[-0.01em]">
           {project.name}
         </h1>
         {project.description && (
-          <p className="text-[13px] text-zinc-500 mt-0.5">
+          <p className="text-[13px] text-ink-3 mt-0.5">
             {project.description}
           </p>
         )}
-        <div className="mt-1.5 flex items-center gap-2 text-[11px] font-mono text-zinc-400 flex-wrap">
+        <div className="mt-1.5 flex items-center gap-2 text-[11px] font-mono text-ink-4 flex-wrap">
           <span>
             {project.scan.frequency}
             {project.scan.time ? ` @ ${project.scan.time}` : ""}
@@ -66,12 +66,12 @@ export function ProjectDetail() {
       </div>
 
       {project.aiInferredSummary && (
-        <div className="mb-4 rounded-md bg-white ring-1 ring-inset ring-zinc-200 p-3">
-          <div className="inline-flex items-center gap-1.5 text-[10px] font-bold tracking-wider uppercase text-zinc-400 mb-1">
+        <div className="mb-4 rounded-md bg-surface-raised ring-1 ring-inset ring-hairline p-3">
+          <div className="inline-flex items-center gap-1.5 text-[10px] font-bold tracking-wider uppercase text-ink-4 mb-1">
             <Icon.Sparkle className="w-3 h-3" />
             AI inference
           </div>
-          <p className="text-[13px] leading-[20px] text-zinc-700 text-pretty">
+          <p className="text-[13px] leading-[20px] text-ink-2 text-pretty">
             {project.aiInferredSummary}
           </p>
         </div>
@@ -103,8 +103,8 @@ function ProjectTabs({ base, slug }: { base: string; slug: string }) {
       className={({ isActive }) =>
         `relative inline-flex items-center gap-1.5 px-3 py-2 text-[13px] font-medium border-b-2 transition-colors ${
           isActive
-            ? "border-zinc-900 text-zinc-900"
-            : "border-transparent text-zinc-500 hover:text-zinc-800"
+            ? "border-ink-1 text-ink-1"
+            : "border-transparent text-ink-3 hover:text-ink-1"
         }`
       }
     >
@@ -116,14 +116,14 @@ function ProjectTabs({ base, slug }: { base: string; slug: string }) {
               className={`inline-flex items-center px-1 min-w-[18px] h-[16px] justify-center rounded text-[10px] font-semibold tabular-nums ${
                 isActive
                   ? "bg-emerald-100 text-emerald-800"
-                  : "bg-zinc-100 text-zinc-600"
+                  : "bg-surface-sunk text-ink-2"
               }`}
             >
               {count}
             </span>
           )}
           {v2 && (
-            <span className="ml-0.5 text-[9px] uppercase tracking-wider text-zinc-400">
+            <span className="ml-0.5 text-[9px] uppercase tracking-wider text-ink-4">
               V2
             </span>
           )}
@@ -133,7 +133,7 @@ function ProjectTabs({ base, slug }: { base: string; slug: string }) {
   );
 
   return (
-    <div className="flex items-center border-b border-zinc-200 -mx-1">
+    <div className="flex items-center border-b border-hairline -mx-1">
       {tab(`${base}/feed`, "Feed", feedUnread)}
       {tab(`${base}/project`, "Project", 0)}
       {tab(`${base}/competitors`, "Competitors", competitorsUnread)}
@@ -154,10 +154,10 @@ function useCompetitorsUnreadCount(slug: string | undefined): number {
 export function InsightsTab() {
   return (
     <div className="py-12 text-center">
-      <div className="inline-flex items-center gap-1.5 text-[10px] font-semibold tracking-wider uppercase text-zinc-400 mb-2">
+      <div className="inline-flex items-center gap-1.5 text-[10px] font-semibold tracking-wider uppercase text-ink-4 mb-2">
         V2 only
       </div>
-      <p className="text-[14px] text-zinc-500">
+      <p className="text-[14px] text-ink-3">
         Cross-project comparisons, peer deltas.
       </p>
     </div>

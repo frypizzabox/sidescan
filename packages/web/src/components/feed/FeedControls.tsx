@@ -78,7 +78,7 @@ export function FeedControls({
   };
 
   return (
-    <div className="flex items-center gap-2 flex-wrap py-2.5 border-b border-zinc-100">
+    <div className="flex items-center gap-2 flex-wrap py-2.5 border-b border-hairline">
       <div className="flex items-center gap-1 flex-wrap">
         {SOURCE_FILTERS.map((s) => {
           const active = filters.includes(s.key);
@@ -90,7 +90,7 @@ export function FeedControls({
               className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-[12px] font-medium ring-1 ring-inset transition-colors ${
                 active
                   ? s.active
-                  : "text-zinc-500 bg-white ring-zinc-200 hover:text-zinc-800 hover:ring-zinc-300"
+                  : "text-ink-3 bg-surface-raised ring-hairline hover:text-ink-1 hover:ring-hairline-strong"
               }`}
             >
               <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
@@ -101,10 +101,10 @@ export function FeedControls({
       </div>
 
       <div className="ml-auto flex items-center gap-2">
-        <label className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-[12px] font-medium text-zinc-600 hover:text-zinc-900 cursor-pointer">
+        <label className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-[12px] font-medium text-ink-2 hover:text-ink-1 cursor-pointer">
           <input
             type="checkbox"
-            className="w-3 h-3 rounded border-zinc-300 accent-emerald-600"
+            className="w-3 h-3 rounded border-hairline-strong accent-emerald-600"
             checked={unreadOnly}
             onChange={(e) => setUnreadOnly(e.target.checked)}
           />

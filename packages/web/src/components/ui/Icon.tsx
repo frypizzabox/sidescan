@@ -103,4 +103,39 @@ export const Icon = {
       <path d="M8 1l1.2 4.3L13.5 6.5 9.2 7.7 8 12 6.8 7.7 2.5 6.5 6.8 5.3z" />
     </svg>
   ),
+  Sun: ({ className = "w-3.5 h-3.5" }: IconProps) => (
+    <svg
+      viewBox="0 0 16 16"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    >
+      <circle cx="8" cy="8" r="3" />
+      <path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.2 3.2l1.4 1.4M11.4 11.4l1.4 1.4M3.2 12.8l1.4-1.4M11.4 4.6l1.4-1.4" />
+    </svg>
+  ),
+  Moon: ({ className = "w-3.5 h-3.5" }: IconProps) => (
+    <svg
+      viewBox="0 0 16 16"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    >
+      <path d="M13 9.5A5.5 5.5 0 0 1 6.5 3a5.5 5.5 0 1 0 6.5 6.5z" />
+    </svg>
+  ),
+  Desktop: ({ className = "w-3.5 h-3.5" }: IconProps) => (
+    <svg
+      viewBox="0 0 16 16"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    >
+      <rect x="1.5" y="2.5" width="13" height="9" rx="1" />
+      <path d="M5 14h6M8 11.5V14" />
+    </svg>
+  ),
 };

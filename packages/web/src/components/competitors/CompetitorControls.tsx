@@ -24,9 +24,9 @@ export function CompetitorControls({
   ];
 
   return (
-    <div className="flex items-center gap-2 flex-wrap py-2.5 border-b border-zinc-100">
+    <div className="flex items-center gap-2 flex-wrap py-2.5 border-b border-hairline">
       <div className="flex items-center gap-1 text-[12px]">
-        <span className="text-zinc-500 mr-1">Sort</span>
+        <span className="text-ink-3 mr-1">Sort</span>
         {sortOptions.map((o) => (
           <button
             key={o.k}
@@ -34,8 +34,8 @@ export function CompetitorControls({
             onClick={() => setSort(o.k)}
             className={`px-2 py-1 rounded font-medium ring-1 ring-inset transition-colors ${
               sort === o.k
-                ? "bg-zinc-900 text-white ring-zinc-900"
-                : "bg-white text-zinc-600 ring-zinc-200 hover:ring-zinc-300"
+                ? "bg-ink-1 text-white ring-ink-1"
+                : "bg-surface-raised text-ink-2 ring-hairline hover:ring-hairline-strong"
             }`}
           >
             {o.l}
@@ -43,7 +43,7 @@ export function CompetitorControls({
         ))}
       </div>
       <div className="ml-auto flex items-center gap-2">
-        <label className="inline-flex items-center gap-1.5 text-[12px] font-medium text-zinc-600 cursor-pointer">
+        <label className="inline-flex items-center gap-1.5 text-[12px] font-medium text-ink-2 cursor-pointer">
           <input
             type="checkbox"
             className="w-3 h-3 rounded accent-emerald-600"
@@ -55,7 +55,7 @@ export function CompetitorControls({
         <select
           value={lang}
           onChange={(e) => setLang(e.target.value)}
-          className="text-[12px] px-2 py-1 rounded bg-white ring-1 ring-inset ring-zinc-200 text-zinc-700 hover:ring-zinc-300 focus:outline-none focus:ring-zinc-400"
+          className="text-[12px] px-2 py-1 rounded bg-surface-raised ring-1 ring-inset ring-hairline text-ink-2 hover:ring-hairline-strong focus:outline-none focus:ring-hairline-strong"
         >
           <option value="all">All languages</option>
           {languages.map((l) => (

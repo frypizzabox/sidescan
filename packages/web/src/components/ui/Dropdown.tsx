@@ -33,7 +33,7 @@ export function Dropdown<V extends string>({
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="inline-flex items-center gap-1 px-2 py-1 rounded text-[12px] font-medium text-zinc-600 bg-white ring-1 ring-inset ring-zinc-200 hover:ring-zinc-300"
+        className="inline-flex items-center gap-1 px-2 py-1 rounded text-[12px] font-medium text-ink-2 bg-surface-raised ring-1 ring-inset ring-hairline hover:ring-hairline-strong"
       >
         {label}
         <Icon.Chevron
@@ -41,7 +41,7 @@ export function Dropdown<V extends string>({
         />
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-1 min-w-[160px] bg-white rounded-md shadow-lg ring-1 ring-zinc-200 py-1 z-20">
+        <div className="absolute right-0 top-full mt-1 min-w-[160px] bg-surface-raised rounded-md shadow-lg ring-1 ring-hairline py-1 z-20">
           {options.map((o) => (
             <button
               key={o.value}
@@ -50,10 +50,10 @@ export function Dropdown<V extends string>({
                 onChange(o.value);
                 setOpen(false);
               }}
-              className={`w-full text-left px-3 py-1.5 text-[13px] hover:bg-zinc-50 flex items-center gap-2 ${
+              className={`w-full text-left px-3 py-1.5 text-[13px] hover:bg-surface flex items-center gap-2 ${
                 value === o.value
-                  ? "text-zinc-900 font-medium"
-                  : "text-zinc-600"
+                  ? "text-ink-1 font-medium"
+                  : "text-ink-2"
               }`}
             >
               {value === o.value ? (

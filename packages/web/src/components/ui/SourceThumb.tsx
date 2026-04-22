@@ -11,7 +11,7 @@ const TONE_BG: Record<string, string> = {
   orange: "bg-orange-500",
   red: "bg-red-500",
   sky: "bg-sky-600",
-  zinc: "bg-zinc-700",
+  zinc: "bg-ink-2",
   purple: "bg-purple-600",
   violet: "bg-violet-600",
 };
@@ -36,7 +36,7 @@ export function SourceThumb({
         height={size}
         loading="lazy"
         referrerPolicy="no-referrer"
-        className="shrink-0 rounded-md object-cover bg-zinc-100 ring-1 ring-inset ring-zinc-200"
+        className="shrink-0 rounded-md object-cover bg-surface-sunk ring-1 ring-inset ring-hairline"
         style={{ width: size, height: size }}
       />
     );
@@ -70,7 +70,7 @@ export function SourceThumb({
   return (
     <div
       style={{ width: size, height: size }}
-      className="shrink-0 rounded-md bg-zinc-100 ring-1 ring-inset ring-zinc-200 overflow-hidden relative"
+      className="shrink-0 rounded-md bg-surface-sunk ring-1 ring-inset ring-hairline overflow-hidden relative"
     >
       <div
         className="absolute inset-0 opacity-40"
@@ -80,7 +80,7 @@ export function SourceThumb({
         }}
       />
       <div className={`absolute top-1.5 left-1.5 w-4 h-4 rounded-sm ${toneBg}`} />
-      <div className="absolute bottom-1 right-1.5 text-[14px] font-semibold text-zinc-500 leading-none">
+      <div className="absolute bottom-1 right-1.5 text-[14px] font-semibold text-ink-3 leading-none">
         {letter}
       </div>
     </div>
