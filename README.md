@@ -100,7 +100,7 @@ sidescan init                         # create config.yaml + .env + data/ in CWD
 sidescan start [--watch-config]       # boot server + scheduler (foreground)
 sidescan status                       # running state + project summary
 sidescan reload                       # re-read config.yaml on a running server
-sidescan scan [project-slug]          # scan one or all auto-scan projects
+sidescan scan [project-slug] [--all]  # scan one, all auto-scan, or --all (incl. manual)
 sidescan reset <project-slug> [-y]    # hard-delete scan history for a project
 sidescan version
 ```

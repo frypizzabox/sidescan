@@ -8,18 +8,43 @@ import { openDb } from "@/db/connection.js";
 import { migrate } from "@/db/migrate.js";
 import { createAIProvider } from "@/ai/factory.js";
 import { scanProject } from "@/scanner/orchestrator.js";
-import { listProjects } from "@/db/queries.js";
+import { listProjects, type ProjectRow } from "@/db/queries.js";
+
+export interface ScanTargetOptions {
+  slug?: string;
+  all?: boolean;
+}
+
+/**
+ * Picks which projects a `sidescan scan` invocation should hit.
+ *
+ * - With a slug: exactly that project (or empty if unknown).
+ * - With --all: every project, including frequency=manual ones.
+ * - Default: every non-manual project (the scheduler contract).
+ */
+export function selectScanTargets(
+  projects: ProjectRow[],
+  opts: ScanTargetOptions,
+): ProjectRow[] {
+  if (opts.slug) return projects.filter((p) => p.slug === opts.slug);
+  if (opts.all) return projects;
+  return projects.filter((p) => p.scan_frequency !== "manual");
+}
 
 export function registerScan(program: Command): void {
   program
     .command("scan [project-slug]")
     .description("Scan a project (or all non-manual projects) for new findings")
     .option("--bootstrap", "treat as a bootstrap scan (uses lookback_years)")
+    .option(
+      "--all",
+      "include frequency=manual projects (useful for post-upgrade re-scans)",
+    )
     .option("--verbose", "debug logging")
     .action(
       async (
         slug: string | undefined,
-        opts: { bootstrap?: boolean; verbose?: boolean },
+        opts: { bootstrap?: boolean; all?: boolean; verbose?: boolean },
       ) => {
         try {
           loadEnvFile();
@@ -31,9 +56,7 @@ export function registerScan(program: Command): void {
           const provider = createAIProvider(config);
 
           const all = listProjects(db);
-          const targets = slug
-            ? all.filter((p) => p.slug === slug)
-            : all.filter((p) => p.scan_frequency !== "manual");
+          const targets = selectScanTargets(all, { slug, all: opts.all });
 
           if (targets.length === 0) {
             if (slug) {
@@ -42,7 +65,9 @@ export function registerScan(program: Command): void {
               );
               process.exit(2);
             }
-            console.log("No projects to scan (all are frequency=manual).");
+            console.log(
+              "No projects to scan (all are frequency=manual). Pass --all to include them.",
+            );
             return;
           }
 
