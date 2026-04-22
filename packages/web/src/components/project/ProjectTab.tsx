@@ -1,7 +1,13 @@
 import { Link, useParams } from "react-router-dom";
-import { useProject, type Repo, type ScanSummary } from "@/lib/api";
+import {
+  useProject,
+  useSparkline,
+  type Repo,
+  type ScanSummary,
+} from "@/lib/api";
 import { Icon } from "@/components/ui/Icon";
 import { RepoAvatar } from "@/components/ui/RepoAvatar";
+import { Sparkline } from "@/components/ui/Sparkline";
 import { absoluteTime, relativeTime } from "@/components/ui/time";
 
 export function ProjectTab() {
@@ -25,6 +31,8 @@ export function ProjectTab() {
 
   return (
     <div className="space-y-6">
+      <ActivityTrend slug={project.slug} />
+
       <Section title="Repos" count={repos.length}>
         <div className="space-y-2">
           {repos.map((r) => (
@@ -64,6 +72,29 @@ export function ProjectTab() {
         </dl>
       </Section>
     </div>
+  );
+}
+
+function ActivityTrend({ slug }: { slug: string }) {
+  const { data } = useSparkline(slug, 30);
+  if (!data || data.buckets.length === 0) return null;
+  const total = data.buckets.reduce((sum, b) => sum + b.count, 0);
+
+  return (
+    <section className="rounded-md ring-1 ring-inset ring-zinc-200 bg-white px-3 py-2.5 flex items-center gap-4">
+      <div>
+        <h2 className="text-[11px] font-bold tracking-wider uppercase text-zinc-500">
+          Activity trend
+        </h2>
+        <p className="text-[12px] text-zinc-500">
+          <span className="text-zinc-800 font-medium tabular-nums">{total}</span>{" "}
+          finding{total === 1 ? "" : "s"} over the last {data.days} days
+        </p>
+      </div>
+      <div className="ml-auto">
+        <Sparkline buckets={data.buckets} height={32} />
+      </div>
+    </section>
   );
 }
 

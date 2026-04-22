@@ -44,7 +44,14 @@ export interface ProjectDetail {
   scans: ScanSummary[];
 }
 
-export type FindingSource = "github_similar" | "hn" | "ph" | "web";
+export type FindingSource =
+  | "github_similar"
+  | "hn"
+  | "ph"
+  | "web"
+  | "reddit"
+  | "lobsters"
+  | "devto";
 export type FindingTab = "news" | "github";
 
 export interface Finding {
@@ -103,11 +110,32 @@ export type FeedEntry =
 
 export type ReadKind = "finding" | "activity";
 
+export interface DigestHighlight {
+  findingId: number;
+  label: string;
+  source: FindingSource;
+  title: string;
+  url: string;
+}
+
 export interface WhatsNewResponse {
   content: string | null;
   createdAt: string | null;
   scanId: number | null;
   newCount: number;
+  counts: Partial<Record<FindingSource, number>>;
+  activityCounts: { commit: number; release: number; issue: number; pr: number };
+  highlights: DigestHighlight[];
+}
+
+export interface SparklineBucket {
+  date: string; // YYYY-MM-DD
+  count: number;
+}
+
+export interface SparklineResponse {
+  days: number;
+  buckets: SparklineBucket[];
 }
 
 export interface AcrossFinding {
@@ -215,6 +243,15 @@ export function useWhatsNew(slug: string | undefined) {
     enabled: !!slug,
     queryFn: () =>
       request<WhatsNewResponse>(`/api/projects/${slug}/whats-new`),
+  });
+}
+
+export function useSparkline(slug: string | undefined, days = 30) {
+  return useQuery({
+    queryKey: ["sparkline", slug, days],
+    enabled: !!slug,
+    queryFn: () =>
+      request<SparklineResponse>(`/api/projects/${slug}/sparkline?days=${days}`),
   });
 }
 
