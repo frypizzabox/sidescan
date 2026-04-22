@@ -2,8 +2,7 @@
 
 > Sidescan watches the world around your GitHub repos — HN, Reddit, Dev.to, competitors — and tells you what you might be missing.
 
-<!-- Replace with a dashboard screenshot once you have one you like: -->
-<!-- ![Sidescan dashboard](docs/screenshot.png) -->
+![Sidescan dashboard](assets/screenshot.png)
 
 Self-hosted. Single Docker image. Zero telemetry. MIT.
 
