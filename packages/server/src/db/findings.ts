@@ -1,5 +1,5 @@
 import type { Db } from "@/db/connection.js";
-import type { Finding } from "@/sources/source.js";
+import type { Finding, SourceName } from "@/sources/source.js";
 
 export interface UpsertResult {
   inserted: number;
@@ -98,7 +98,7 @@ export function upsertFindings(
 export interface FindingRow {
   id: number;
   scan_id: number;
-  source: "github_similar" | "hn" | "ph" | "web";
+  source: SourceName;
   tab: "news" | "github";
   url: string;
   title: string;

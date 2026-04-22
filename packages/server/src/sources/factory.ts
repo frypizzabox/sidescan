@@ -5,6 +5,9 @@ import { HNSource } from "@/sources/hn.js";
 import { GitHubSimilarSource } from "@/sources/github-similar.js";
 import { BraveWebSource } from "@/sources/web-brave.js";
 import { SerperWebSource } from "@/sources/web-serper.js";
+import { RedditSource } from "@/sources/reddit.js";
+import { LobstersSource } from "@/sources/lobsters.js";
+import { DevToSource } from "@/sources/devto.js";
 
 export interface SourceSet {
   active: Source[];
@@ -24,6 +27,11 @@ export function buildSources(config: Config): SourceSet {
 
   // HN — always on, no auth
   active.push(new HNSource());
+
+  // Reddit / Lobsters / Dev.to — always on, no auth
+  active.push(new RedditSource());
+  active.push(new LobstersSource());
+  active.push(new DevToSource());
 
   // GitHub — works unauthenticated (low rate limit) or with token (higher)
   active.push(new GitHubSimilarSource(keys.githubToken));

@@ -1,6 +1,6 @@
 # Sidescan
 
-> Self-hostable competitive-intel server for solo devs. Point it at your GitHub repos (or local clones); it watches HN, GitHub, and the web for nearby work.
+> Self-hostable competitive-intel server for solo devs. Point it at your GitHub repos (or local clones); it watches HN, Reddit, Lobsters, Dev.to, GitHub, and the web for nearby work.
 
 **Status:** V1 complete — scan, infer, surface findings, rank, dashboard.
 
@@ -8,7 +8,7 @@
 
 - A local service + SQLite DB + web dashboard
 - You configure projects (repos to monitor) in a single YAML file
-- On a schedule, each project's repo is analyzed, an LLM infers what it is, and search queries fan out to HN / GitHub / Brave or Serper for nearby work
+- On a schedule, each project's repo is analyzed, an LLM infers what it is, and search queries fan out to HN / Reddit / Lobsters / Dev.to / GitHub / Brave or Serper for nearby work
 - Findings accumulate across scans with dedup + relevance ranking
 - "What's new since last scan" digest, dismiss, timeline view, ⌘K palette
 
@@ -152,7 +152,7 @@ Keys never live in `config.yaml`. `config.yaml` is safe to commit to a dotfiles 
 Each scan makes 2-3 AI calls (repo inference, rank findings, what's-new summary) plus external source requests.
 
 - Claude Sonnet 4.6: ~$0.01 - $0.03 per scan
-- HN / GitHub (unauth): free
+- HN / Reddit / Lobsters / Dev.to / GitHub (unauth): free
 - Brave free tier: 1 req/sec, 2k/month
 - Serper: pay-per-search
 

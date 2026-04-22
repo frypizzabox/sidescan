@@ -1,4 +1,11 @@
-export type SourceName = "github_similar" | "hn" | "ph" | "web";
+export type SourceName =
+  | "github_similar"
+  | "hn"
+  | "ph"
+  | "web"
+  | "reddit"
+  | "lobsters"
+  | "devto";
 export type FindingTab = "news" | "github";
 
 export interface Finding {
