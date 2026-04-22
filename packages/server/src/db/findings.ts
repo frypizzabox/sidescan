@@ -237,6 +237,135 @@ export function updateFindingEnrichment(
   ).run(meta.thumbnailUrl, meta.faviconUrl, findingId);
 }
 
+export type FindingCountsBySource = Partial<Record<SourceName, number>>;
+
+/**
+ * Counts new findings (first_seen = this scan, not dismissed) grouped by
+ * source. Drives the enriched "what's new" digest.
+ */
+export function countNewFindingsBySource(
+  db: Db,
+  projectId: number,
+  scanId: number,
+): FindingCountsBySource {
+  const rows = db
+    .prepare<
+      [number, number],
+      { source: SourceName; c: number }
+    >(
+      `SELECT f.source, COUNT(*) AS c
+       FROM finding f
+       JOIN scan s ON f.scan_id = s.id
+       JOIN repo r ON s.repo_id = r.id
+       WHERE r.project_id = ?
+         AND f.first_seen_scan_id = ?
+         AND f.dismissed = 0
+       GROUP BY f.source`,
+    )
+    .all(projectId, scanId);
+  const out: FindingCountsBySource = {};
+  for (const row of rows) out[row.source] = row.c;
+  return out;
+}
+
+export interface ActivityCounts {
+  commit: number;
+  release: number;
+  issue: number;
+  pr: number;
+}
+
+/**
+ * Counts repo_activity rows inserted during the given scan, grouped by kind.
+ */
+export function countNewActivityByKind(
+  db: Db,
+  projectId: number,
+  scanId: number,
+): ActivityCounts {
+  const rows = db
+    .prepare<
+      [number, number],
+      { kind: keyof ActivityCounts; c: number }
+    >(
+      `SELECT a.kind, COUNT(*) AS c
+       FROM repo_activity a
+       JOIN repo r ON a.repo_id = r.id
+       WHERE r.project_id = ?
+         AND a.scan_id = ?
+       GROUP BY a.kind`,
+    )
+    .all(projectId, scanId);
+  const out: ActivityCounts = { commit: 0, release: 0, issue: 0, pr: 0 };
+  for (const row of rows) out[row.kind] = row.c;
+  return out;
+}
+
+export interface Highlight {
+  findingId: number;
+  label: string;
+  source: SourceName;
+  title: string;
+  url: string;
+}
+
+const SOURCE_LABEL: Record<SourceName, string> = {
+  hn: "HN",
+  reddit: "Reddit",
+  lobsters: "Lobsters",
+  devto: "Dev.to",
+  github_similar: "GitHub",
+  web: "Web",
+  ph: "Product Hunt",
+};
+
+/**
+ * Picks the top N new findings for the digest banner, ranked by
+ * relevance_score. Ties broken by points (HN/Reddit/Lobsters upvotes)
+ * and then by event_date.
+ */
+export function listDigestHighlights(
+  db: Db,
+  projectId: number,
+  scanId: number,
+  limit = 5,
+): Highlight[] {
+  const rows = db
+    .prepare<
+      [number, number, number],
+      {
+        id: number;
+        source: SourceName;
+        title: string;
+        url: string;
+        points: number | null;
+      }
+    >(
+      `SELECT f.id, f.source, f.title, f.url, f.points
+       FROM finding f
+       JOIN scan s ON f.scan_id = s.id
+       JOIN repo r ON s.repo_id = r.id
+       WHERE r.project_id = ?
+         AND f.first_seen_scan_id = ?
+         AND f.dismissed = 0
+       ORDER BY COALESCE(f.relevance_score, 0) DESC,
+                COALESCE(f.points, 0) DESC,
+                COALESCE(f.event_date, f.created_at) DESC
+       LIMIT ?`,
+    )
+    .all(projectId, scanId, limit);
+  return rows.map((r) => ({
+    findingId: r.id,
+    label:
+      r.points != null && r.points > 0
+        ? `${SOURCE_LABEL[r.source]} · ${r.points} pts`
+        : SOURCE_LABEL[r.source],
+    source: r.source,
+    title: r.title,
+    url: r.url,
+  }));
+}
+
 /**
  * Returns the latest successful/partial scan id for a project.
  * Used to compute "new since last scan" counts and `since` cutoffs.

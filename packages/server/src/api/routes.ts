@@ -9,6 +9,9 @@ import {
 import {
   listFindingsForProject,
   countNewFindingsSince,
+  countNewFindingsBySource,
+  countNewActivityByKind,
+  listDigestHighlights,
   getLatestScanIdForProject,
   dismissFinding,
   markFindingRead,
@@ -330,7 +333,17 @@ export function buildApiRoutes(deps: ApiDeps): Hono {
       return c.json({ error: "project_not_found", slug }, 404);
     }
     const latestScanId = getLatestScanIdForProject(deps.db, project.id);
-    if (!latestScanId) return c.json({ content: null });
+    if (!latestScanId) {
+      return c.json({
+        content: null,
+        createdAt: null,
+        scanId: null,
+        newCount: 0,
+        counts: {},
+        activityCounts: { commit: 0, release: 0, issue: 0, pr: 0 },
+        highlights: [],
+      });
+    }
     const row = deps.db
       .prepare<
         [number],
@@ -346,6 +359,9 @@ export function buildApiRoutes(deps: ApiDeps): Hono {
       createdAt: row?.created_at ?? null,
       scanId: latestScanId,
       newCount: countNewFindingsSince(deps.db, project.id, latestScanId),
+      counts: countNewFindingsBySource(deps.db, project.id, latestScanId),
+      activityCounts: countNewActivityByKind(deps.db, project.id, latestScanId),
+      highlights: listDigestHighlights(deps.db, project.id, latestScanId, 5),
     });
   });
 
