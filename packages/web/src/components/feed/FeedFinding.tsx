@@ -33,10 +33,10 @@ export function FeedFinding({
 
   const railClass =
     readStyle === "rail" && unread
-      ? "border-l-2 border-emerald-500 pl-4"
+      ? "border-l-2 border-emerald-500"
       : readStyle === "tint" && unread
-        ? "bg-emerald-50/40 -mx-4 px-4 rounded-md"
-        : "pl-0";
+        ? "bg-emerald-50/40"
+        : "";
 
   const domain = finding.domain ?? extractDomain(finding.url);
 
@@ -46,11 +46,11 @@ export function FeedFinding({
       target="_blank"
       rel="noreferrer noopener"
       onClick={onOpen}
-      className={`group relative flex gap-3 ${pad} ${railClass} border-b border-zinc-100 hover:bg-zinc-50/70 transition-colors cursor-pointer`}
+      className={`group relative flex gap-3 px-4 ${pad} ${railClass} border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50/70 transition-colors cursor-pointer`}
     >
       {readStyle === "dot" && (
         <span
-          className={`absolute left-0 top-[22px] w-1.5 h-1.5 rounded-full ${unread ? "bg-emerald-500" : "bg-transparent"}`}
+          className={`absolute left-1.5 top-[22px] w-1.5 h-1.5 rounded-full ${unread ? "bg-emerald-500" : "bg-transparent"}`}
         />
       )}
       {showThumbs && (

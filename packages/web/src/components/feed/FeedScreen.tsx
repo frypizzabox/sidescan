@@ -143,16 +143,21 @@ export function FeedScreen() {
             : "Nothing matches these filters."}
         </div>
       ) : (
-        <div className="space-y-1">
+        <div className="space-y-3">
           {grouped.map((g) => (
-            <div key={g.key}>
+            <section
+              key={g.key}
+              className="rounded-md ring-1 ring-inset ring-zinc-200 bg-white overflow-hidden"
+            >
               {g.label && sort === "newest" && (
-                <div className="sticky top-0 bg-white/90 backdrop-blur-sm py-1.5 text-[11px] font-semibold uppercase tracking-wider text-zinc-400 border-b border-zinc-100 z-10">
-                  {g.label}
-                  <span className="ml-1 text-zinc-300 font-normal tracking-normal normal-case">
+                <header className="px-4 py-2 bg-zinc-50/60 border-b border-zinc-100 flex items-baseline gap-1.5">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+                    {g.label}
+                  </span>
+                  <span className="text-[11px] text-zinc-400 tabular-nums">
                     · {g.items.length}
                   </span>
-                </div>
+                </header>
               )}
               {g.items.map((e) => {
                 const { kind, id } = entryReadKey(e);
@@ -181,7 +186,7 @@ export function FeedScreen() {
                   />
                 );
               })}
-            </div>
+            </section>
           ))}
         </div>
       )}

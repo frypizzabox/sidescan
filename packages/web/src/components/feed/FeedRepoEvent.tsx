@@ -36,10 +36,10 @@ export function FeedRepoEvent({
   const pad = density === "compact" ? "py-2" : "py-2.5";
   const railClass =
     readStyle === "rail" && unread
-      ? "border-l-2 border-emerald-500 pl-4"
+      ? "border-l-2 border-emerald-500"
       : readStyle === "tint" && unread
-        ? "bg-emerald-50/40 -mx-4 px-4 rounded-md"
-        : "pl-0";
+        ? "bg-emerald-50/40"
+        : "";
 
   const href = activity.url ?? "#";
 
@@ -52,11 +52,11 @@ export function FeedRepoEvent({
         if (!activity.url) e.preventDefault();
         onOpen();
       }}
-      className={`group relative flex items-center gap-3 ${pad} ${railClass} border-b border-zinc-100 hover:bg-zinc-50/70 ${activity.url ? "cursor-pointer" : "cursor-default"}`}
+      className={`group relative flex items-center gap-3 px-4 ${pad} ${railClass} border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50/70 ${activity.url ? "cursor-pointer" : "cursor-default"}`}
     >
       {readStyle === "dot" && (
         <span
-          className={`absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full ${unread ? "bg-emerald-500" : "bg-transparent"}`}
+          className={`absolute left-1.5 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full ${unread ? "bg-emerald-500" : "bg-transparent"}`}
         />
       )}
       <span
