@@ -45,6 +45,10 @@ COPY --from=builder /build/packages/server/src/db/migrations       packages/serv
 # Web bundle (served by the server in production)
 COPY --from=builder /build/packages/web/dist packages/web/dist
 
+# Put `sidescan` on the container's PATH so `docker compose exec sidescan
+# sidescan scan <slug>` works instead of the long `node packages/.../bin`.
+RUN ln -s /app/packages/server/bin/sidescan /usr/local/bin/sidescan
+
 # Install dir lives at /app; config + .env + data/ are mounted here.
 # Data dir override lets compose mount a named volume elsewhere if desired.
 ENV SIDESCAN_DATA_DIR=/app/data

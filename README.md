@@ -35,17 +35,29 @@ EOF
 # 2. Edit config.yaml to add your projects
 $EDITOR config.yaml
 
-# 3. Boot
+# 3. Boot the service (runs the scheduler + serves the dashboard)
 docker compose up -d
 
 # 4. Open the dashboard
 open http://localhost:3000
 
-# 5. Trigger your first scan
-docker compose exec sidescan node packages/server/bin/sidescan scan <your-project-slug> --bootstrap
+# 5. Seed your first project with real data
+./sidescan scan <your-project-slug> --bootstrap
 ```
 
-An install is one directory holding `config.yaml`, `.env`, and `data/` (SQLite). Config is edited by hand; the web UI is view-only.
+The service runs the scheduler on boot, so projects with `frequency: daily` or `weekly` scan themselves automatically. You'd only run `./sidescan scan …` manually for the first bootstrap, to force-scan a `manual` project, or when you're impatient.
+
+An install is one directory holding `config.yaml`, `.env`, `data/` (SQLite), and the `./sidescan` wrapper script that forwards CLI calls into the container. Config is edited by hand; the web UI is view-only.
+
+### Other CLI commands
+
+```bash
+./sidescan status                  # running state + per-project summary
+./sidescan reload                  # re-read config.yaml without restart
+./sidescan scan --all --bootstrap  # re-scan every project (incl. manual-frequency)
+./sidescan reset <slug> -y         # wipe a project's findings
+./sidescan version
+```
 
 ## Config shape
 

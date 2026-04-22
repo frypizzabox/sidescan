@@ -1,0 +1,14 @@
+#!/usr/bin/env sh
+# Host wrapper for the Sidescan CLI running inside Docker Compose.
+#
+# Usage: drop this file next to your config.yaml / .env / data/ and make
+# it executable (chmod +x sidescan). Then:
+#
+#   ./sidescan scan my-project --bootstrap
+#   ./sidescan status
+#   ./sidescan reload
+#   ./sidescan reset my-project -y
+#
+# It simply forwards all arguments to the CLI inside the running
+# `sidescan` container, so the service must be up: `docker compose up -d`.
+exec docker compose exec sidescan sidescan "$@"
