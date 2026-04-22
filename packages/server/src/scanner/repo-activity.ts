@@ -19,6 +19,9 @@ export interface RepoActivitySummary {
   repoPath: string;
   commitsRead: number;
   commitsInserted: number;
+  releasesInserted: number;
+  issuesInserted: number;
+  prsInserted: number;
   latestSha: string | null;
   isBootstrap: boolean;
 }
@@ -163,6 +166,9 @@ async function collectLocalRepoActivity(
     repoPath: repo.path,
     commitsRead: commits.length,
     commitsInserted: inserted,
+    releasesInserted: 0,
+    issuesInserted: 0,
+    prsInserted: 0,
     latestSha,
     isBootstrap,
   };

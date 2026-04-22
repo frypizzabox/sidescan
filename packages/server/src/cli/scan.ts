@@ -62,8 +62,12 @@ export function registerScan(program: Command): void {
             });
 
             for (const a of result.activity) {
+              const parts = [`${a.commitsInserted} commits`];
+              if (a.releasesInserted > 0) parts.push(`${a.releasesInserted} releases`);
+              if (a.issuesInserted > 0) parts.push(`${a.issuesInserted} issues`);
+              if (a.prsInserted > 0) parts.push(`${a.prsInserted} PRs`);
               console.log(
-                `  ${project.slug}   activity: ${a.commitsInserted} commits (${a.repoPath})`,
+                `  ${project.slug}   activity: ${parts.join(", ")} (${a.repoPath})`,
               );
             }
 

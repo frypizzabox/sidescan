@@ -32,7 +32,13 @@ export interface ScanResult {
   scanId: number;
   project: ProjectRow;
   inference: RepoInference | null;
-  activity: { repoPath: string; commitsInserted: number }[];
+  activity: {
+    repoPath: string;
+    commitsInserted: number;
+    releasesInserted: number;
+    issuesInserted: number;
+    prsInserted: number;
+  }[];
   findings: {
     source: string;
     found: number;
@@ -137,6 +143,9 @@ export async function scanProject(opts: {
         activitySummaries.push({
           repoPath: summary.repoPath,
           commitsInserted: summary.commitsInserted,
+          releasesInserted: summary.releasesInserted,
+          issuesInserted: summary.issuesInserted,
+          prsInserted: summary.prsInserted,
         });
       } catch (err) {
         partial = true;
@@ -145,6 +154,9 @@ export async function scanProject(opts: {
         activitySummaries.push({
           repoPath: repo.path,
           commitsInserted: 0,
+          releasesInserted: 0,
+          issuesInserted: 0,
+          prsInserted: 0,
         });
       }
     }
