@@ -66,7 +66,7 @@ export function InsightsTab() {
           description="Recent peer shipments and discussion in your project's space."
           bullets={data.market}
           findings={data.findings}
-          accent="zinc"
+          accent="sky"
         />
       )}
     </div>
@@ -99,12 +99,12 @@ function Panel({
   description: string;
   bullets: InsightBullet[];
   findings: InsightsResponse["findings"];
-  accent: "emerald" | "zinc";
+  accent: "emerald" | "sky";
 }) {
   const headerTone =
     accent === "emerald"
       ? "text-emerald-700 dark:text-emerald-300"
-      : "text-ink-3";
+      : "text-sky-700 dark:text-sky-300";
 
   return (
     <section className="rounded-md ring-1 ring-inset ring-hairline bg-surface-raised overflow-hidden">

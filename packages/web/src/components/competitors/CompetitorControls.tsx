@@ -34,7 +34,7 @@ export function CompetitorControls({
             onClick={() => setSort(o.k)}
             className={`px-2 py-1 rounded font-medium ring-1 ring-inset transition-colors ${
               sort === o.k
-                ? "bg-ink-1 text-white ring-ink-1"
+                ? "bg-ink-1 text-canvas ring-ink-1"
                 : "bg-surface-raised text-ink-2 ring-hairline hover:ring-hairline-strong"
             }`}
           >
