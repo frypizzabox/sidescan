@@ -57,7 +57,7 @@ export function Sidebar() {
         {projects.data?.projects.map((p) => (
           <NavItem
             key={p.slug}
-            to={`/projects/${p.slug}/feed`}
+            to={`/projects/${p.slug}`}
             label={p.name}
             count={p.newFindingsSinceLastScan}
           />
